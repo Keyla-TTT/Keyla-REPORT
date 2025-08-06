@@ -16,7 +16,3 @@ This report documents the development of the KEYLA-TTT project, covering all asp
 - **[DevOps](./DevOps)** - CI/CD pipeline and infrastructure
 - **[Technologies](./Technologies)** - Technology stack and tools used
 - **[Conclusion](./Conclusion)** - Project summary and lessons learned
-
-## Resources
-
-Additional resources including diagrams and documentation can be found in the [Resources](./Resources/) directory. 
