@@ -3,23 +3,32 @@ import { defineConfig } from 'vitepress'
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   title: "KEYLA-TTT",
-  description: "This Site is the report for thw KEYLA-TTT project, made for the SPE's exam.",
+  description: "This Site is the report for the KEYLA-TTT project, made for the SPE's exam.",
+  base: '/Keyla-REPORT/',
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Examples', link: '/markdown-examples' }
+      { text: 'Report', link: '/Report/' }
     ],
 
-    sidebar: [
-      {
-        text: 'Examples',
-        items: [
-          { text: 'Markdown Examples', link: '/markdown-examples' },
-          { text: 'Runtime API Examples', link: '/api-examples' }
-        ]
-      }
-    ],
+    sidebar: {
+      '/Report/': [
+        {
+          text: 'Report',
+          items: [
+            { text: 'Introduction', link: '/Report/Introduction' },
+            { text: 'Requirements', link: '/Report/Requirements' },
+            { text: 'Design', link: '/Report/Design' },
+            { text: 'Implementation', link: '/Report/Implementation' },
+            { text: 'Deployment', link: '/Report/Deployment' },
+            { text: 'DevOps', link: '/Report/DevOps' },
+            { text: 'Technologies', link: '/Report/Technologies' },
+            { text: 'Conclusion', link: '/Report/Conclusion' }
+          ]
+        }
+      ]
+    },
 
     socialLinks: [
       { icon: 'github', link: 'https://github.com/vuejs/vitepress' }
