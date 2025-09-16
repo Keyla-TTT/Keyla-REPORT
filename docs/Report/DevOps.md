@@ -317,7 +317,7 @@ Passi:
 Funzione: orchestrare semantic-release e allegare asset.  
 Passi:
 - Download di tutti gli artifact (binari + docs)
-- Install plugin `semantic-release` (commit analyzer, notes, changelog, git, github)
+- Install plugin `semantic-release` (commit analyzer, notes, changelog, git, gitHub)
 - List diagnostico degli artifact (debug)
 - `npx semantic-release --extends ./release.config.js`
     - Determina versione
