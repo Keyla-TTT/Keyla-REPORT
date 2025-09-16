@@ -1,4 +1,4 @@
-## 4. CI/CD con GitHub Actions (API - Scala)
+## 4. CI/CD con GitHub Actions 
 
 ### 4.1.1 Panorama dei Workflow
 | Workflow | File | Trigger | Scopo sintetico |
