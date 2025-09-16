@@ -1,166 +1,187 @@
-# DevOps
-- Descrizione del flusso di sviluppo (git flow, convenzioni di commit, branch).
-- Automazione: script npm, build, serve, test.
-- Containerizzazione (Docker, docker-compose).
-- CI/CD: pipeline GitHub Actions, SonarCloud, semantic-release.
-- Eventuali diagrammi di pipeline, screenshot di configurazioni, esempi di file di configurazione.
+## 4. CI/CD con GitHub Actions (API - Scala)
+
+### 4.1.1 Panorama dei Workflow
+| Workflow | File | Trigger | Scopo sintetico |
+|----------|------|---------|-----------------|
+| CI Scala | `\.github/workflows/scala.yml` | `pull_request` (verso `develop`,`main`), `workflow_dispatch` | Validazioni qualità (format, lint, test, coverage) |
+| Sync Release Branch | `\.github/workflows/push_on_release.yml` | `push` / PR chiusa su `main`, manuale | Allinea `release` a `main` |
+| Semantic Release + Docs | `\.github/workflows/release.yml` | `push` su `release`, manuale | Genera docs, pubblica Pages, crea release + asset |
 
 ---
-# DevOps
 
-Questo capitolo descrive le pratiche e gli strumenti DevOps adottati nel progetto Keyla-TTT per garantire un flusso di sviluppo efficiente, automatizzato e di alta qualità, dalla scrittura del codice al deployment.
+### 4.1.2 Workflow CI (`scala.yml`)
+Obiettivo: impedire l’ingresso in `develop` / `main` di codice non formattato, non conforme o con test rotti.
 
-## 1. Flusso di Sviluppo
+Trigger:
+- `pull_request`: garantisce feedback precoce sulle modifiche destinate a rami principali.
+- `workflow_dispatch`: esecuzione manuale per verifiche spot.
 
-Il progetto adotta un flusso di lavoro basato su GitFlow per gestire lo sviluppo del codice in modo strutturato.
+Jobs (ordine logico):
 
--   **Branch Principali**:
-    -   `main`: Contiene il codice di produzione stabile. Ogni commit su questo branch rappresenta una nuova versione rilasciata.
-    -   `develop`: È il branch di integrazione principale per le nuove funzionalità. Una volta che le funzionalità sono stabili, vengono unite in `main` per un nuovo rilascio.
--   **Branch di Supporto**:
-    -   `feature/*`: Le nuove funzionalità vengono sviluppate in branch dedicati che partono da `develop` (es. `feature/analytics`). Una volta completate, vengono unite nuovamente in `develop` tramite una Pull Request.
--   **Convenzioni di Commit**: Si raccomanda l'uso dei **Conventional Commits**. Questo standard non solo migliora la leggibilità della cronologia di Git, ma è anche fondamentale per l'automazione del versioning e la generazione del changelog tramite `semantic-release`.
+#### Job: `setup`
+Funzione: prepara ambiente e popola cache per velocizzare i job successivi.  
+Passi principali:
+- Checkout: recupera il codice.
+- `sbt/setup-sbt`: abilita wrapper e configurazioni SBT.
+- Cache (cartelle `~/.sbt`, `~/.ivy2/cache`, `~/.coursier/cache`): riduce tempi di download dipendenze.
+- Output `cache-hit`: può essere usato per logiche condizionali future (non ancora sfruttato).
 
-## 2. Automazione e Qualità del Codice
+#### Job: `format` (dipende da `setup`)
+Scopo: bloccare codice non formattato.  
+Passi:
+- Restore cache (ripete per isolamento del job).
+- Setup JDK 21 (distribuzione Temurin) con cache integrata.
+- Esegue `sbt scalafmtCheckAll`: fallisce se anche un solo file non è conforme.
 
-Per mantenere un'alta qualità del codice e automatizzare le attività ripetitive, il progetto utilizza diversi strumenti.
+#### Job: `lint` (dipende da `setup`)
+Scopo: controllo statico.  
+Passi:
+- Setup analogo a `format`.
+- Esegue `sbt "scalafixAll --check"`: verifica regole di refactoring e qualità. Non modifica i file (modalità check).
 
--   **Build Tool (SBT)**: SBT è lo strumento di build per il backend Scala. Gestisce la compilazione, l'esecuzione dei test, la gestione delle dipendenze e l'esecuzione di task personalizzati.
--   **Hook di Pre-commit**: Prima di ogni commit, uno script di pre-commit (configurato in `build.sbt`) viene eseguito automaticamente. Questo script:
-    1.  Controlla la formattazione del codice Scala con `scalafmt`.
-    2.  Esegue l'analisi statica con `scalafix`.
-    3.  In caso di problemi, tenta di correggerli automaticamente e aggiunge i file modificati al commit. Questo garantisce che solo codice conforme agli standard venga inserito nel repository.
+#### Job: `test` (dipende da `format` e `lint`)
+Scopo: validazione funzionale + coverage.  
+Passi:
+- Setup ambiente (checkout + cache).
+- `sbt clean coverage test coverageReport`:
+    - `coverage`: attiva strumentazione.
+    - `test`: esegue suite.
+    - `coverageReport`: genera report (es. scoverage).
+- Upload artifact (cartella `target/scala-*/scoverage-report`): rende disponibile il report per consultazione / aggregazione futura.
 
-## 3. Containerizzazione
+Note operative e possibili estensioni interne alla sezione (non nuovi paragrafi):
+- Aggiungibile un job `sonar` dopo `test` (`needs: test`).
+- Aggiungere `concurrency: { group: ci-${{ github.ref }}, cancel-in-progress: true }` per evitare esecuzioni duplicate su PR aggiornate.
+- Inseribile soglia coverage (`sbt coverageAggregate` + parsing) per fallire sotto un limite.
 
-L'applicazione e i suoi servizi dipendenti sono containerizzati per garantire coerenza tra gli ambienti di sviluppo, test e produzione.
-
--   **Docker**: Viene utilizzato un `Dockerfile` per creare un'immagine dell'applicazione Scala, includendo tutte le dipendenze necessarie per la sua esecuzione.
--   **Docker Compose**: Per l'ambiente di sviluppo locale, un file `docker-compose.yml` orchestra l'avvio dell'applicazione e dei servizi di supporto, come il database MongoDB, con un singolo comando.
-
-## 4. CI/CD con GitHub Actions
-
-Il progetto si avvale di una pipeline di Integrazione Continua e Deployment Continuo (CI/CD) implementata con GitHub Actions. La pipeline viene attivata ad ogni Pull Request verso i branch `develop` e `main`.
-
-### Pipeline di CI
-
-La pipeline di Integrazione Continua è definita nel file `.github/workflows/scala.yml` e si compone dei seguenti job:
-
-1.  **Setup**: Installa le dipendenze e le mette in cache per accelerare le esecuzioni successive.
-2.  **Format**: Verifica che tutto il codice sia formattato correttamente eseguendo `sbt scalafmtCheckAll`.
-3.  **Lint**: Esegue un'analisi statica del codice per individuare potenziali bug o "code smells" tramite `sbt "scalafixAll --check"`.
-4.  **Test**: Esegue la suite di test unitari e di integrazione, generando un report di code coverage. Il report viene poi caricato come artefatto per poter essere analizzato.
-
-### Diagramma della Pipeline
-
+Diagramma:
 ```mermaid
 graph TD
-    A[Pull Request] --> B{Setup};
-    B --> C[Format];
-    B --> D[Lint];
-    C --> E[Test];
-    D --> E;
-    E --> F[Upload Coverage Report];
-
-    classDef trigger fill:#e1f5fe,stroke:#0288d1,stroke-width:2px;
-    classDef job fill:#e8f5e9,stroke:#388e3c,stroke-width:2px;
-    class A trigger;
-    class B,C,D,E,F job;
+  A[PR / Dispatch] --> B[setup]
+  B --> C[format]
+  B --> D[lint]
+  C --> E[test]
+  D --> E
+  E --> F[coverage artifact]
 ```
 
-### File di Configurazione della Pipeline
+---
 
-Di seguito è riportato il contenuto del file di configurazione della pipeline di GitHub Actions.
+### 4.1.3 Workflow Sync Branch (`push_on_release.yml`)
+Obiettivo: mantenere `release` come riflesso immediato e controllato di `main`, separando l’atto di pubblicazione (che avviene solo su `release`).
 
-```yaml
-# .github/workflows/scala.yml
-name: Scala CI
+Trigger:
+- `push` su `main`: ogni aggiornamento stabile.
+- `pull_request` chiusa verso `main`: copre merge via PR.
+- `workflow_dispatch`: fallback manuale.
 
-on:
-  workflow_dispatch:
-  pull_request:
-    branches: [ "develop", "main" ]
+Job: `update-release-branch`  
+Passi:
+- Checkout con `fetch-depth: 0` (serve la storia completa in caso di future analisi o tag).
+- Configurazione identità Git (necessaria per push).
+- `git checkout -B release`: crea o riallinea branch locale.
+- `git push --force`: garantisce identità tra `main` e `release` (scelta consapevole: sovrascrive divergenze).
+- Notifica testuale (log di auditing).
 
-permissions:
-  contents: read
+Rischio noto: perdita di commit manuali su `release` (devono essere evitati per policy).
 
-jobs:
-  setup:
-    runs-on: ubuntu-latest
-    outputs:
-      cache-hit: ${{ steps.cache.outputs.cache-hit }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: sbt/setup-sbt@v1
-      - name: Cache sbt
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.sbt
-            ~/.ivy2/cache
-            ~/.coursier/cache
-          key: ${{ runner.os }}-sbt-${{ hashFiles('**/*.sbt') }}
-          restore-keys: ${{ runner.os }}-sbt-
+---
 
-  format:
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
-      - uses: actions/checkout@v4
-      - uses: sbt/setup-sbt@v1
-      - name: Restore sbt cache
-        # ... (cache restore steps)
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'sbt'
-      - name: Check formatting
-        run: sbt scalafmtCheckAll
+### 4.1.4 Workflow Release + Documentazione (`release.yml`)
+Obiettivo: pipeline integrata di documentazione, pubblicazione della versione e distribuzione artefatti.
 
-  lint:
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
-      - uses: actions/checkout@v4
-      - uses: sbt/setup-sbt@v1
-      - name: Restore sbt cache
-        # ... (cache restore steps)
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'sbt'
-      - name: Run scalafix
-        run: sbt "scalafixAll --check"
+Trigger:
+- `push` su `release`: solo dopo riallineamento da `main`.
+- `workflow_dispatch`: rilancio manuale (es. in caso di fix su configurazioni).
 
-  test:
-    runs-on: ubuntu-latest
-    needs: [ format, lint ]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: sbt/setup-sbt@v1
-      - name: Restore sbt cache
-        # ... (cache restore steps)
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'sbt'
-      - name: Run tests with coverage
-        run: sbt clean coverage test coverageReport
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: target/scala-*/scoverage-report
+Permissions:
+- `contents: write`: tag + release + eventuali commit (changelog).
+- `pages: write` + `id-token: write`: distribuzione GitHub Pages sicura (OIDC).
+
+Jobs (pipeline sequenziale):
+
+#### Job: `docs`
+Scopo: generare documentazione API (Scaladoc).  
+Passi:
+- Checkout + setup SBT + cache dipendenze.
+- JDK 21 (coerente con build principale).
+- `sbt doc`: genera documentazione in `target/scala-*/api`.
+- Copia in struttura piatta (`docs-to-deploy`) per conformità a Pages.
+- Artifact upload (`api-documentation`): passaggio inter-job affidabile.
+
+#### Job: `deploy-docs` (needs: `docs`)
+Scopo: pubblicazione su GitHub Pages.  
+Passi:
+- Download artifact (isolamento: non richiede ricostruzione).
+- Log diagnostico (listing file).
+- `actions/configure-pages`: prepara ambiente.
+- Upload artifact dedicato a Pages.
+- Deploy con `actions/deploy-pages`: espone URL (esportato come output `page_url`).
+
+#### Job: `release` (needs: `deploy-docs`)
+Scopo: creare release versionata con asset binari.  
+Passi:
+- Checkout intero (storia necessaria per semantic-release).
+- Setup SBT + cache.
+- Build pacchetto distributivo: `sbt Universal/packageBin` → ZIP in `target/universal`.
+- Setup Node (ambiente tool di rilascio).
+- Installazione dipendenze `semantic-release` (plugin core: analyzer, notes, git, github).
+- Preparazione cartella `release-assets`.
+- Copia ZIP dentro `release-assets` (sarà allegato).
+- Config Git (necessario se plugin `@semantic-release/git` aggiorna `CHANGELOG.md`).
+- Esecuzione `npx semantic-release`:
+    - Analizza commit (Conventional Commits).
+    - Determina tipo di versione (major/minor/patch).
+    - Genera changelog.
+    - Crea tag + GitHub Release.
+    - Allegare asset (richiede config file con `assets`).
+- Dispatch verso repository `Keyla-RELEASE` (evento `new-release`) per orchestrazioni esterne/aggregazioni future.
+    - Usa `PAT_TOKEN` (scope repo) perché `GITHUB_TOKEN` non può dispatchare cross-repo in alcuni casi di restrizione.
+
+Diagramma:
+```mermaid
+graph TD
+  R1[Push su release] --> R2[docs]
+  R2 --> R3[deploy-docs]
+  R3 --> R4[build + semantic-release]
+  R4 --> R5[GitHub Release + Assets]
+  R5 --> R6[Dispatch Meta Repo]
 ```
 
-### Analisi Continua e Versioning
+Nota: eventuali failure in `deploy-docs` bloccano la pubblicazione (consistenza docs-versione).
 
--   **SonarCloud**: Integrato nella pipeline, SonarCloud esegue un'analisi approfondita del codice ad ogni Pull Request, controllando vulnerabilità di sicurezza, bug, code smells e code coverage, fornendo un feedback diretto agli sviluppatori.
--   **Semantic Release**: Al momento del merge su `main`, un'azione di `semantic-release` analizza i messaggi di commit, determina automaticamente la nuova versione del software secondo le regole del Semantic Versioning, genera un changelog e crea una nuova release su GitHub.
+---
+
+### 4.1.5 Semantic Release: Regole e Mappature
+Logica di bump automatico:
+- `feat:` → minor
+- `fix:` / `perf:` → patch
+- `refactor:` / `docs:` / `chore:` / `test:` / `style:` → nessun bump (se senza `BREAKING CHANGE`)
+- Presenza di testo `BREAKING CHANGE:` (o `!` nel tipo) → major
+
+Prerequisiti qualitativi:
+- Commit lint (pre-merge) per evitare messaggi non conformi.
+- Evitare push diretti su `release` (solo sync automatica).
+
+---
+
+### 4.1.6 Checklist Operativa
+- \[ \] Conventional Commits applicati su tutte le PR
+- \[ \] Protezione branch `main` / `release`
+- \[ \] Coverage minima definita e verificata
+- \[ \] (Opzionale) Analisi SonarCloud integrata post-test
+- \[ \] Artifact ZIP presente e allegato nelle release
+- \[ \] Docs pubblicate contestualmente alla versione
+- \[ \] Evento `repository-dispatch` ricevuto correttamente dal repo aggregatore
+- \[ \] Changelog generato automaticamente senza conflitti di merge
+
+---
+
+### 4.1.7 Sintesi
+Il modello separa chiaramente:
+- Validazione continua (CI su PR)
+- Stabilizzazione (`main`)
+- Pubblicazione controllata (`release`)
+- Distribuzione documentazione + asset coerenti con la versione
+
+Questa stratificazione riduce rischi (release premature), incrementa tracciabilità e facilita l’estensione futura ad altri componenti (CLI, meta-release) senza modificare il core del flusso esistente. del merge su `main`, un'azione di `semantic-release` analizza i messaggi di commit, determina automaticamente la nuova versione del software secondo le regole del Semantic Versioning, genera un changelog e crea una nuova release su GitHub.
