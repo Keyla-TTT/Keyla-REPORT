@@ -1,66 +1,87 @@
-# DevOps
-- Descrizione del flusso di sviluppo (git flow, convenzioni di commit, branch).
-- Automazione: script npm, build, serve, test.
-- Containerizzazione (Docker, docker-compose).
-- CI/CD: pipeline GitHub Actions, SonarCloud, semantic-release.
-- Eventuali diagrammi di pipeline, screenshot di configurazioni, esempi di file di configurazione.
+# CI/CD
 
----
-# DevOps
+This chapter describes the complete implementation of Continuous Integration and Continuous Deployment (CI/CD) in the Keyla-TTT project, including continuous integration pipelines, automated release processes, pre-commit hooks, and Docker image management.
 
-Questo capitolo descrive le pratiche e gli strumenti DevOps adottati nel progetto Keyla-TTT per garantire un flusso di sviluppo efficiente, automatizzato e di alta qualità, dalla scrittura del codice al deployment.
+## 1. CI/CD Architecture
 
-## 1. Flusso di Sviluppo
+The Keyla-TTT project implements a multi-repository CI/CD architecture that coordinates three main components:
 
-Il progetto adotta un flusso di lavoro basato su GitFlow per gestire lo sviluppo del codice in modo strutturato.
+- **Keyla-API**: Scala Backend with SBT
+- **Keyla-CLI**: Kotlin Multiplatform Application with Gradle  
+- **Keyla-RELEASE**: Release repository that aggregates components and produces Docker images
 
--   **Branch Principali**:
-    -   `main`: Contiene il codice di produzione stabile. Ogni commit su questo branch rappresenta una nuova versione rilasciata.
-    -   `develop`: È il branch di integrazione principale per le nuove funzionalità. Una volta che le funzionalità sono stabili, vengono unite in `main` per un nuovo rilascio.
--   **Branch di Supporto**:
-    -   `feature/*`: Le nuove funzionalità vengono sviluppate in branch dedicati che partono da `develop` (es. `feature/analytics`). Una volta completate, vengono unite nuovamente in `develop` tramite una Pull Request.
--   **Convenzioni di Commit**: Si raccomanda l'uso dei **Conventional Commits**. Questo standard non solo migliora la leggibilità della cronologia di Git, ma è anche fondamentale per l'automazione del versioning e la generazione del changelog tramite `semantic-release`.
+### Development Workflow
 
-## 2. Automazione e Qualità del Codice
+The project adopts a GitFlow-based workflow with the following branches:
 
-Per mantenere un'alta qualità del codice e automatizzare le attività ripetitive, il progetto utilizza diversi strumenti.
+- **`develop`**: Integration branch for new features
+- **`main`**: Stable production branch
+- **`release`**: Trigger branch for automated release process
+- **`feature/*`**: Branches for new feature development
 
--   **Build Tool (SBT)**: SBT è lo strumento di build per il backend Scala. Gestisce la compilazione, l'esecuzione dei test, la gestione delle dipendenze e l'esecuzione di task personalizzati.
--   **Hook di Pre-commit**: Prima di ogni commit, uno script di pre-commit (configurato in `build.sbt`) viene eseguito automaticamente. Questo script:
-    1.  Controlla la formattazione del codice Scala con `scalafmt`.
-    2.  Esegue l'analisi statica con `scalafix`.
-    3.  In caso di problemi, tenta di correggerli automaticamente e aggiunge i file modificati al commit. Questo garantisce che solo codice conforme agli standard venga inserito nel repository.
+### Commit Conventions
 
-## 3. Containerizzazione
+The project uses **Conventional Commits** to standardize commit messages, enabling automated versioning and changelog generation.
 
-L'applicazione e i suoi servizi dipendenti sono containerizzati per garantire coerenza tra gli ambienti di sviluppo, test e produzione.
+## 2. Pre-commit Hooks
 
--   **Docker**: Viene utilizzato un `Dockerfile` per creare un'immagine dell'applicazione Scala, includendo tutte le dipendenze necessarie per la sua esecuzione.
--   **Docker Compose**: Per l'ambiente di sviluppo locale, un file `docker-compose.yml` orchestra l'avvio dell'applicazione e dei servizi di supporto, come il database MongoDB, con un singolo comando.
+The project implements separate pre-commit hooks for backend and frontend to ensure code quality before every commit.
 
-## 4. CI/CD con GitHub Actions
+### Backend (API Scala) - Pre-commit Hook
 
-Il progetto si avvale di una pipeline di Integrazione Continua e Deployment Continuo (CI/CD) implementata con GitHub Actions. La pipeline viene attivata ad ogni Pull Request verso i branch `develop` e `main`.
+The Scala backend implements a pre-commit hook that ensures code quality before every commit. The hook automatically identifies modified Scala files and runs formatting checks (`scalafmtCheck`) and static analysis (`scalafixAll --check`). If any checks fail, it automatically applies corrections using `scalafmtAll` and `scalafixAll`, then adds the corrected files to the commit.
 
-### Pipeline di CI
+### Frontend (CLI Kotlin) - Pre-commit Hook
 
-La pipeline di Integrazione Continua è definita nel file `.github/workflows/scala.yml` e si compone dei seguenti job:
+The Kotlin frontend implements a more complex pre-commit hook that includes tests. The hook runs code quality checks using `ktlintCheck` and `detekt`, auto-formats code with `ktlintFormat` if issues are found, and then executes the complete test suite with `allTests`. The commit is blocked if any check fails.
 
-1.  **Setup**: Installa le dipendenze e le mette in cache per accelerare le esecuzioni successive.
-2.  **Format**: Verifica che tutto il codice sia formattato correttamente eseguendo `sbt scalafmtCheckAll`.
-3.  **Lint**: Esegue un'analisi statica del codice per individuare potenziali bug o "code smells" tramite `sbt "scalafixAll --check"`.
-4.  **Test**: Esegue la suite di test unitari e di integrazione, generando un report di code coverage. Il report viene poi caricato come artefatto per poter essere analizzato.
+### Commit Message Validation
 
-### Diagramma della Pipeline
+Both backend and frontend use a `commit-msg` hook that validates commit message format according to Conventional Commits standards. The hook enforces the pattern `type(scope): description` where type must be one of: feat, fix, docs, style, refactor, test, chore, perf, ci, build, or revert.
+
+## 3. Continuous Integration Pipelines
+
+### API (Scala) - CI Pipeline
+
+The CI pipeline for the API is defined in `.github/workflows/scala.yml` and triggers on pull requests to develop and main branches. The pipeline consists of four main jobs:
+
+1. **Setup**: Configures the environment and caches SBT dependencies for faster subsequent runs
+2. **Format**: Verifies code formatting using `scalafmtCheckAll`
+3. **Lint**: Performs static analysis using `scalafixAll --check`
+4. **Test**: Runs the test suite with code coverage reporting using Scoverage, then uploads coverage reports as artifacts
+
+
+### Frontend (CLI Kotlin) - CI Pipeline
+
+The CI pipeline for the frontend is defined in `.github/workflows/kotlin.yml` and triggers on pull requests to develop and main branches. The pipeline consists of three main jobs:
+
+1. **Setup**: Configures the environment with JDK and caches Gradle dependencies
+2. **Check**: Runs code quality checks using `ciCheckCode` which includes ktlint and detekt
+3. **Test**: Executes the JVM test suite and uploads test results as artifacts
+
+
+### CI Pipeline Diagram
 
 ```mermaid
 graph TD
-    A[Pull Request] --> B{Setup};
-    B --> C[Format];
-    B --> D[Lint];
-    C --> E[Test];
-    D --> E;
-    E --> F[Upload Coverage Report];
+    A[Pull Request] --> B[Setup & Cache]
+    B --> C[Format Check]
+    B --> D[Lint Check]
+    C --> E[Tests]
+    D --> E
+    E --> F[Upload Artifacts]
+    
+    subgraph "API (Scala)"
+        C1[scalafmtCheckAll]
+        D1[scalafixAll --check]
+        E1[coverage test]
+    end
+    
+    subgraph "Frontend (Kotlin)"
+        C2[ktlintCheck]
+        D2[detekt]
+        E2[jvmTest]
+    end
 
     classDef trigger fill:#e1f5fe,stroke:#0288d1,stroke-width:2px;
     classDef job fill:#e8f5e9,stroke:#388e3c,stroke-width:2px;
@@ -68,99 +89,90 @@ graph TD
     class B,C,D,E,F job;
 ```
 
-### File di Configurazione della Pipeline
+## 4. Automated Release Process
 
-Di seguito è riportato il contenuto del file di configurazione della pipeline di GitHub Actions.
+### Release Triggers
 
-```yaml
-# .github/workflows/scala.yml
-name: Scala CI
+The release process is triggered by pushes to the `release` branch of each repository. An automatic workflow (`push_on_release.yml`) keeps the `release` branch synchronized with `main` by automatically updating the release branch whenever changes are pushed to main or when pull requests are merged.
 
-on:
-  workflow_dispatch:
-  pull_request:
-    branches: [ "develop", "main" ]
+### API (Scala) Release
 
-permissions:
-  contents: read
+The release process for the API includes:
 
-jobs:
-  setup:
-    runs-on: ubuntu-latest
-    outputs:
-      cache-hit: ${{ steps.cache.outputs.cache-hit }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: sbt/setup-sbt@v1
-      - name: Cache sbt
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.sbt
-            ~/.ivy2/cache
-            ~/.coursier/cache
-          key: ${{ runner.os }}-sbt-${{ hashFiles('**/*.sbt') }}
-          restore-keys: ${{ runner.os }}-sbt-
+1. **Documentation Generation**: API documentation creation with SBT
+2. **Documentation Deploy**: Publication to GitHub Pages
+3. **Universal Package Build**: ZIP package creation for distribution
+4. **Semantic Release**: Automatic versioning and GitHub release creation
+5. **Release Repository Trigger**: Notification to Keyla-RELEASE repository
 
-  format:
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
-      - uses: actions/checkout@v4
-      - uses: sbt/setup-sbt@v1
-      - name: Restore sbt cache
-        # ... (cache restore steps)
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'sbt'
-      - name: Check formatting
-        run: sbt scalafmtCheckAll
+The workflow generates the API documentation, deploys it to GitHub Pages, creates a universal ZIP package for distribution, and uses semantic-release to automatically determine the version number based on commit messages. Upon successful release, it triggers the Keyla-RELEASE repository to update the Docker image.
 
-  lint:
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
-      - uses: actions/checkout@v4
-      - uses: sbt/setup-sbt@v1
-      - name: Restore sbt cache
-        # ... (cache restore steps)
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'sbt'
-      - name: Run scalafix
-        run: sbt "scalafixAll --check"
+### Frontend (CLI Kotlin) Release
 
-  test:
-    runs-on: ubuntu-latest
-    needs: [ format, lint ]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: sbt/setup-sbt@v1
-      - name: Restore sbt cache
-        # ... (cache restore steps)
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'sbt'
-      - name: Run tests with coverage
-        run: sbt clean coverage test coverageReport
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: target/scala-*/scoverage-report
-```
+The release process for the frontend includes:
 
-### Analisi Continua e Versioning
+1. **Multi-Platform Build**: Compilation for Linux, macOS and Windows
+2. **Documentation Generation**: Documentation creation with Dokka
+3. **Semantic Release**: Automatic versioning with binary assets
+4. **Release Repository Trigger**: Notification to Keyla-RELEASE repository
 
--   **SonarCloud**: Integrato nella pipeline, SonarCloud esegue un'analisi approfondita del codice ad ogni Pull Request, controllando vulnerabilità di sicurezza, bug, code smells e code coverage, fornendo un feedback diretto agli sviluppatori.
--   **Semantic Release**: Al momento del merge su `main`, un'azione di `semantic-release` analizza i messaggi di commit, determina automaticamente la nuova versione del software secondo le regole del Semantic Versioning, genera un changelog e crea una nuova release su GitHub.
+The workflow uses a matrix strategy to build native executables for multiple platforms (Linux x64, macOS ARM64, Windows x64) using Kotlin Native. It generates documentation with Dokka, creates platform-specific binaries, and uses semantic-release to automatically version and attach the binaries to GitHub releases. Upon successful release, it triggers the Keyla-RELEASE repository to update the Docker image.
+
+## 5. Release Repository and Containerization
+
+### Keyla-RELEASE Repository
+
+The Keyla-RELEASE repository aggregates released components and produces Docker images. It's triggered by `repository_dispatch` events from API and CLI repositories.
+
+**Complete Process:**
+1. **Trigger**: Activated by API or CLI release via `repository_dispatch`
+2. **Resolve Tags**: Determines latest versions of both components
+3. **Download Assets**: Downloads API ZIP package and CLI binaries
+4. **Create Combined Tag**: Generates combined tag `v<api_version>.<cli_version>`
+5. **Build Docker Image**: Creates and publishes Docker image to Docker Hub
+6. **Create Release**: Creates GitHub release with combination details
+
+The workflow resolves the latest versions of both components when one is released, downloads the appropriate assets, creates a combined version tag, builds a Docker image that includes both the API and CLI components, and publishes it to Docker Hub with both the specific version tag and the latest tag.
+
+### Docker Image
+
+The final Docker image (`keylattt/keyla`) combines:
+
+- **Backend API**: ZIP package of the Scala application
+- **CLI Binaries**: Native executables for Linux, macOS and Windows
+- **Dictionaries**: Dictionary files for typing tests
+- **Scripts**: Installation and startup scripts
+
+The Docker image is based on OpenJDK 11 JRE and includes all necessary components for running the complete Keyla application. It sets up the proper directory structure, installs the CLI binary as a system command, extracts and configures the API, and provides startup scripts to run both components together.
+
+## 6. Automation and Code Quality
+
+### Quality Tools
+
+- **Scala (API)**:
+  - `scalafmt`: Automatic code formatting
+  - `scalafix`: Static analysis and automatic refactoring
+  - `scoverage`: Code coverage
+
+- **Kotlin (Frontend)**:
+  - `ktlint`: Kotlin code formatting and linting
+  - `detekt`: Static analysis for Kotlin
+  - `dokka`: Documentation generation
+
+### Caching and Optimization
+
+Pipelines use extensive caching to optimize execution times:
+
+- **SBT Cache**: Cache for Scala dependencies and compilations
+- **Gradle Cache**: Cache for Kotlin dependencies and builds
+- **Node Modules Cache**: Cache for JavaScript dependencies
+- **Docker Layer Cache**: Cache for Docker layers
+
+
+
+## 7. GitHub Integration
+
+- **Pull Request Checks**: Automatic checks on every PR
+- **Release Notes**: Automatic release notes generation
+- **Changelog**: Automatic changelog based on commits
+- **GitHub Pages**: Automatic documentation deployment
