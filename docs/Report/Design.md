@@ -2,23 +2,29 @@
 
 ## Problem
 
-Improve keyboard typing skills, speed, and accuracy. Current tools allow online training. The goal of Keyla is to create a tool that works locally.
+There are many people who want to improve their typing skills, 
+whether for professional or personal reasons. 
+Typing tests help users identify their strengths and weaknesses, 
+track their progress over time, and set goals for improvement.
+The actual tools are only online services, but there are many users who want to use a local tool.
 
 ## Solution
 
 Keyla: Typing Testing tools.
+A local CLI tool that allows users to take typing tests, track their progress, and analyze their performance over time.
 
 ## Domain
 
-Digital Writing
+The project is about the Digital Writing, 
+this means the ability to write text using a computer keyboard with a certain speed and accuracy.
+
 
 ## Contexts (Bounded Contexts)
+The Digital Writing domain has been divided into three main contexts to manage complexity and ensure clarity of responsibilities:
 
-Three main contexts have been identified:
-
-- **User Management**: User profile management
-- **Typing Test**: Typing test management
-- **Statistics & Analytics**: Statistics and historical data
+- **User Management**: User profile management (allow users to create and manage their profiles)
+- **Typing Test**: Typing test management (allow users to take typing tests and record their performance, here the user can choose the settings of the test)
+- **Statistics & Analytics**: Statistics and historical data management (allow users to view their performance statistics and historical trends)
 
 <!-- Insert UML diagram image -->
 <!-- Description: Context Map showing User Management, Typing Test, and Statistics & Analytics and their relationships. -->
@@ -117,7 +123,6 @@ The typical flow starts from the user interface (CLI or API), which sends reques
 
 <!-- Insert UML sequence diagram image -->
 <!-- Description: UML sequence diagram showing the flow of a test session, from profile creation, test start, to statistics saving. -->
-![Schema Qualcosa 2](Resources/DDD_scheme2.png)
 ## Considerations on Extensibility and Maintainability
 
 The clear separation between contexts and the adoption of established patterns make Keyla easily extensible and maintainable. New features can be added without impacting existing components.
