@@ -62,13 +62,13 @@ graph TD
 
 ### 1.2 Backend Functionality
 
-The backend provides comprehensive functionality across three main domains:
+The backend's functionalities include all the three main subdomains described in the design chapter:
 
 #### User Management
-- **User Registration**: Creates new user accounts with validation of email uniqueness and password strength
+In this subdomain (at the implementation level, it became a package), provides the following functionalities:
+- **User Registration**: To create new user accounts with validation of username and password 
 - **Authentication**: Implements secure login mechanism using JWT tokens for session management
-- **Profile Management**: Allows users to view and update their profile information
-- **Authorization**: Controls access to protected resources based on user authentication status
+- **Profile Management**: Allows users to view and update their profile settings
 
 #### Typing Test Management
 - **Test Generation**: Creates typing tests with configurable difficulty levels and durations
@@ -240,3 +240,5 @@ Both components are designed for easy deployment and distribution:
 - **Backend**: Containerized using Docker for consistent deployment across environments
 - **CLI**: Distributed as standalone executables with platform-specific installers
 - **Configuration**: Environment-based configuration management for flexible deployment scenarios.
+
+
