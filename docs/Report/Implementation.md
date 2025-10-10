@@ -1,5 +1,3 @@
-# This chapter need a review.
-
 # Implementation
 
 This chapter describes the implementation of the Keyla-TTT project, focusing on the API architecture and CLI components. The project follows a modular approach with clear separation between backend services and client interfaces.
