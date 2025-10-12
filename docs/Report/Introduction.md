@@ -17,4 +17,4 @@ The application's core mechanism is designed for ease of use and effective feedb
 2.  As the user types, the interface provides immediate feedback, typically by highlighting correct and incorrect characters.
 3.  Once the test is completed, the application calculates and displays a summary of the user's performance, including their WPM score, accuracy rate, and the total time taken. This data helps users identify areas for improvement.
 
-## Images of the Application
+
