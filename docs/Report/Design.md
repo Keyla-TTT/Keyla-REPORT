@@ -33,23 +33,23 @@ The Digital Writing domain has been divided into three main contexts to manage c
 
 To facilitate communication between the team and stakeholders, a shared language has been defined:
 
-| Domain Term            | Technical Concept     | Description                                                                                              |
-|:-----------------------|:----------------------|:---------------------------------------------------------------------------------------------------------|
-| User Profile           | `Profile`             | Account identified by a unique name to access the tool                                                   |
-| Profile ID             | `ProfileId`           | Unique identifier of a profile                                                                           |
-| Preferences            | `Settings`            | Set of specific features of the profile                                                                  |
-| Test Session           | `TestSession`         | Typing test instance started by a user                                                                   |
-| Test Text              | `TestText`            | Words, symbols, and numbers to be typed during the test                                                  |
-| User Input             | `UserInput`           | Text actually typed by the user, with a timestamp for each character                                     |
-| Test Sources           | `TestSource`          | Dictionary from which the test draws for word selection                                                  |
-| Text Generator         | `TestTextGenerator`   | Service that randomly generates the text to be typed                                                     |
-| WPM (Words per minute) | `WPM`                 | Metric: number of correctly typed words                                                                  |
-| Accuracy               | `Accuracy`            | Percentage of correct characters out of the total typed                                                  |
-| Raw Accuracy           | `RawAccuracy`         | Percentage of correct characters out of the total characters in the test                                 |
-| Statistics             | `Stats`               | Performance data saved after each test                                                                   |
-| Analytics              | `HistoricalStats`     | Table showing statistics over time                                                                       |
-| Statistics Calculator  | `StatsCalculator`     | Service that calculates WPM and Accuracy                                                                 |
-| Analytics Calculator   | `AnalyticsCalculator` | Service that calculates average WPM and average Accuracy, total test, percentage of errors, total errors |
+| Domain Term            | Technical Concept | Bounded Context                         | Description                                                              |
+|:-----------------------|:------------------|-----------------------------------------|:-------------------------------------------------------------------------|
+| User Profile           | `Profile`         | User Management                         | Account identified by a unique name to access the tool                   |
+| Profile ID             | `ProfileId`       | User Management                         | Unique identifier of a profile                                           |
+| Configs                | `Configs`         | User Management                         | Configurations of the system                                             |
+| Test Session           | `Test Session`    | Typing test                             | Typing test instance started by a user                                   |
+| Test Text              | `TestText`        | Typing test                             | Words, symbols, and numbers to be typed during the test                  |
+| User Input             | `UserInput`       | Typing test                             | Text actually typed by the user, with a timestamp for each character     |
+| Test Sources           | `TestSource`      | Typing test                             | Dictionary from which the test draws for word selection                  |
+| Modifiers              | `Modifiers`       | Typing test                             | Settings that modify the test (Capital letter, camel case, reverse, ...) |
+| Merger                 | `Merger`          | Typing test                             | Combines multiple dictionaries into a single one                         | 
+| WPM (Words per minute) | `WPM`             | Typing test / Statistics and Analytics  | Metric: number of correctly typed words                                  |
+| Accuracy               | `Accuracy`        | Typing test / Statistics and Analytics  | Percentage of correct characters out of the total typed                  |
+| Raw Accuracy           | `RawAccuracy`     | Typing test / Statistics and Analytics  | Percentage of correct characters out of the total characters in the test |
+| Errors                 | `Errors`          | Typing test / Statistics and Analytics  | When the user types the wrong character                                  |
+| Statistics             | `Stats`           | Statistics and Analytics                | Performance data of each test                                            |
+| Analytics              | `HistoricalStats` | Statistics and Analytics                | Statistics over time                                                     |
 
 ## Domain Model
 
@@ -121,19 +121,10 @@ The Domain layer is organized into three bounded contexts (User Management, Typi
 The Infrastructure layer handles persistence through various repositories that store and retrieve domain objects from the data sources.
 The diagram clearly illustrates the dependencies between layers, showing how each layer depends only on the layers beneath it, which enforces a clean separation of concerns and makes the system more maintainable and extensible.
 
-## Patterns and Design Choices
-Keyla employs several design patterns to ensure a clean architecture:
-- **Domain Driven Design (DDD)** for modeling the domain and its contexts
-- **Repository** pattern for abstracting data access
-- **Factory** pattern for creating complex objects like profiles, test sessions and statistics 
-- **Service Object** pattern for encapsulating domain logic 
-
-
 ## Information Flow
 
 The typical flow starts from the user interface (CLI or API), which sends requests to the application services. These orchestrate operations on the domain and interact with repositories for persistence.
 
-<!-- Insert UML sequence diagram image -->
 ```mermaid
 sequenceDiagram
     actor User
@@ -171,7 +162,6 @@ sequenceDiagram
     TypingTestController-->>User: displayProgress(analysis)
 ```
 
-<!-- Description: UML sequence diagram showing the flow of a test session, from profile creation, test start, to statistics saving. -->
 The process begins with user profile creation: the user interacts with the UserController, which in turn collaborates with the UserRepository to persistently store profile data. 
 Once this initial phase is completed, the flow continues with the start of a typing test, where the TypingTestController requests the TypingTestService to generate a new test based on the selected difficulty and duration parameters. 
 The service obtains an appropriate text from the TextRepository and prepares the test session that is presented to the user.
@@ -180,8 +170,3 @@ At the end of the exercise, this data is sent to the StatisticsService which cal
 The results are saved to the database through the StatisticsRepository. 
 The flow concludes when the user requests to view their progress: the TypingTestController delegates to the AnalyticsService the retrieval of historical data from the StatisticsRepository to generate a comparative analysis that shows the average of performance over time.
 
-## Considerations on Extensibility and Maintainability
-
-The clear separation between contexts and the adoption of established patterns make Keyla easily extensible and maintainable. New features can be added without impacting existing components.
-
----
