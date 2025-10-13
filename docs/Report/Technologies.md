@@ -35,7 +35,7 @@ The Keyla project employs a modern, cross-platform technology stack designed to 
 
 **Role in Project**: Defines the API contracts, generates interactive documentation, and ensures type safety across the entire API surface.
 
-### Cats Effect 
+### Cats Effect
 
 **Purpose**: Functional programming library for asynchronous and concurrent programming.
 
@@ -49,7 +49,7 @@ The Keyla project employs a modern, cross-platform technology stack designed to 
 
 ## Frontend Module
 
-### Kotlin Multiplatform 
+### Kotlin Multiplatform
 
 **Purpose**: Cross-platform development framework for the CLI application.
 

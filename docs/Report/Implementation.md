@@ -1,223 +1,116 @@
+
 # Implementation
+This chapter describes how the various functionalities of the project were implemented.
+Keyla was developed on 2 fronts: the backend that handles the logic and the CLI interface that
+guides the user in using the software and manages the system execution flow.
 
-This chapter describes the main software components, the technologies used, the core classes and services of the Keyla-TTT project, also providing code examples and diagrams illustrating the dependencies between the various modules.
+## Backend
+The Backend part was subdivided into multiple modules (or packages) to facilitate maintenance, 
+maintaining the concept of single responsibility.
+- **UserManagement**: Handles user management.
+- **TypingTest**: Handles creating and managing typing tests.
+- **Analytics**: Handles calculating and displaying test statistics.
+- **Api**: Handles API definition and endpoint management.
 
-## 1. Software Components
+All the modules interact with the CLI through the API module, which exposes all the functionalities 
+via a REST interface where all the functionalities have its own endpoint.
 
-The Keyla-TTT project is structured into the following main components:
+### API
+The `API` module defines the communication interface between frontend and backend, providing a structured set of endpoints to access system functionalities.
 
-- **Backend**: Implemented in Scala using SBT as the build tool, it exposes RESTful APIs and manages business logic.
-- **Database**: MongoDB is used for persistent storage of users, test results, and analytical data.
+The API architecture follows the REST pattern, organizing operations into logical resources corresponding to the main backend modules. Endpoints are grouped into the following categories:
 
-## 2. Technologies Used
+**User Management Endpoints:**
+- `GET /users/{id}`: retrieves information of a specific user profile
+- `POST /users`: creates a new user profile
+- `PUT /users/{id}`: updates an existing user profile
+- `DELETE /users/{id}`: deletes a user profile
+- `GET /users`: retrieves the list of all user profiles
 
-- **Scala 3**: Main programming language for the backend.
-- **SBT**: Build tool for compiling and managing Scala project dependencies.
-- **MongoDB**: NoSQL database for data persistence.
-- **Docker**: For containerizing the application and its dependencies.
-- **Play Framework**: Web framework for implementing RESTful APIs (inferred from the project structure).
+**Typing Test Endpoints:**
+- `POST /tests`: creates and starts a new typing test
+- `GET /tests/{id}`: retrieves details of a specific test
+- `GET /users/{userId}/tests`: retrieves all tests of a user
+- `GET /users/{userId}/tests/last`: retrieves the last completed test by a user
 
-## 3. Main Modules
+**Analytics Endpoints:**
+- `GET /users/{userId}/analytics`: retrieves aggregated statistics of a user
+- `GET /users/{userId}/statistics`: retrieves individual test statistics
 
-### 3.1 User Management
+HTTP request and response handling is delegated to a routing layer that takes care of:
+- Routing requests to appropriate services
+- Handling errors and exceptions
+- Serializing and deserializing JSON data
 
-Handles user registration, authentication, and profile management.
+The API module implements the Controller pattern through a three-layer 
+structure that ensures separation of concerns:
 
-#### Main Classes
+1. **Controller Layer**: Each REST resource is managed by a dedicated controller 
+(`UserController`, `TypingTestController`, `AnalyticsController`) that exclusively handles:
+    - Receiving incoming requests
+    - Delegating processing to business layer services
+    - Formatting HTTP responses with appropriate status codes
+    - Handling presentation layer specific exceptions
 
-- `User`: Represents a user entity with attributes such as username, email, and password.
-- `UserRepository`: Manages CRUD operations for users.
-- `AuthService`: Handles authentication and JWT token generation.
+2. **Service Layer**: Controllers interface with services from respective backend modules 
+(`UserManagement`, `TypingTest`, `Analytics`) that contain business logic. 
+This separation allows to:
+    - Reuse business logic in contexts other than REST API
+    - Test business logic and presentation logic separately
 
-#### Code Example
+3. **Repository Layer**: Services in turn use repositories for data access.
 
-```scala
-// User model
-case class User(
-  id: String,
-  username: String,
-  email: String,
-  passwordHash: String,
-  createdAt: Long
-)
+This implementation ensures that each controller has a specific and limited responsibility, 
+making the code more maintainable and testable.
+Controllers act as intermediaries between the HTTP protocol and business logic,
+translating requests into calls to appropriate services and transforming results into structured HTTP responses.
 
-// User repository
-trait UserRepository {
-  def findById(id: String): Option[User]
+## Frontend / CLI
 
-  def findByUsername(username: String): Option[User]
+This section describes how Keyla's CLI interface is implemented and how it orchestrates user interaction.
 
-  def insert(user: User): User
+### Architecture Overview
+Key components and their roles:
 
-  def update(user: User): Option[User]
+- **Controller**: coordinates the active application mode and delegates work to the corresponding UI session,
+keeping cross‑mode rules (e.g., profile presence, connectivity checks) in one place.
 
-  def delete(id: String): Boolean
-}
+- **UI sessions**: each mode defines a small, fixed list of screens and a state data class. 
+The UI renders from state, 
+and a single event loop handles key presses and runs small background tasks to load or save data.
+
+- **Service facade**: provides simple functions for tests, profiles, configuration, languages, analytics, and statistics. 
+It hides HTTP calls and JSON parsing, returning plain Kotlin models used by the rest of the application.
+
+- **Configuration and persistence**: maintains app settings such as the backend base URL and the active profile.
+
+- **Platform abstractions** (`expect`/`actual`). Thin interfaces provide the HTTP client engine, local storage, and basic platform utilities for each target. The shared logic stays the same across all platforms.
+
+### Entry Points
+The launcher accepts a single command and starts the corresponding mode:
+- `test` (default)
+- `config`
+- `settings`
+- `history`
+- `stats`
+- `profile`
+
+### State Management
+Each mode is modeled as a stateful screen. 
+The UI is rendered from state; a single event loop listens for key presses, updates state, and re‑renders. 
+Small async handlers load or save data through the service facade and then update the state.
+
+### Platforms
+Shared logic lives in common code. 
+Thin platform modules provide the HTTP client and local storage. 
+Native builds exist for JVM, Linux, Windows, and macOS.
+
+### Commands
+```bash
+keyla test
+keyla config
+keyla settings
+keyla history
+keyla stats
+keyla profile
 ```
-
-### 3.2 Typing Test
-
-Manages the logic for typing tests, including test generation and result evaluation.
-
-#### Main Classes
-
-- `TypingTest`: Represents a typing test session.
-- `TypingTestService`: Manages test creation and result validation.
-- `TextRepository`: Provides texts for typing tests.
-
-#### Code Example
-
-```scala
-// TypingTest model
-case class TypingTest(
-  id: String,
-  text: String,
-  difficulty: String,
-  duration: Int,
-  createdAt: Long
-)
-
-// Typing test service
-class TypingTestService(textRepo: TextRepository){
-  def generateTest(difficulty: String, duration: Int): TypingTest = {
-    val text = textRepo.getRandomText(difficulty)
-    TypingTest(
-      id = UUID.randomUUID().toString,
-      text = text,
-      difficulty = difficulty,
-      duration = duration,
-      createdAt = System.currentTimeMillis()
-    )
-  }
-}
-```
-
-### 3.3 Analytics
-
-Collects and analyzes user performance data.
-
-#### Main Classes
-
-- `Statistics` (trait): Defines the structure for statistics.
-- `UserStatistics`: Concrete implementation for user test results.
-- `AnalyticsService`: Aggregates and analyzes statistics.
-
-#### Code Example
-
-```scala
-// Already present in Statistics.scala
-trait Statistics {
-  /** Unique identifier of the user */
-  def userId: String
-
-  /** Unique identifier of the test */
-  def testId: String
-
-  /** Words per minute (WPM) calculated from the typing speed */
-  def wpm: Double
-
-  /** Accuracy percentage of the typed text compared to the target text */
-  def accuracy: Double
-
-  /** List of errors made during the typing test */
-  def errors: List[Int]
-
-  /** Timestamp of when the statistics were recorded */
-  def timestamp: Long
-
-  def copy(): Statistics
-}
-// Analytics service
-class AnalyticsService(statsRepo: StatisticsRepository){
-  def getUserPerformanceHistory(userId: String): List[UserStatistics] =
-    statsRepo.findByUserId(userId)
-
-  def calculateUserProgress(userId: String): ProgressMetrics = {
-    val stats = getUserPerformanceHistory(userId)
-    // Logic to calculate user progress
-    ProgressMetrics()
-  }
-}
-```
-
-### 3.4 API
-
-Exposes RESTful endpoints for communication with the frontend.
-
-#### Main Classes
-
-- `UserController`: Manages user-related API endpoints.
-- `TypingTestController`: Manages typing test endpoints.
-- `AnalyticsController`: Provides analytical data.
-
-#### Code Example
-
-```scala
-// User controller
-class UserController(userService: UserService, authService: AuthService) {
-  def register = Action(parse.json) { request =>
-    // Registration logic
-    Ok(Json.obj("message" -> "User registered successfully"))
-  }
-
-  def login = Action(parse.json) { request =>
-    // Login logic
-    Ok(Json.obj("token" -> generatedToken))
-  }
-}
-// Typing test controller
-class TypingTestController(testService: TypingTestService) {
-  def generateTest(difficulty: String, duration: Int) = Action {
-    val test = testService.generateTest(difficulty, duration)
-    Ok(Json.toJson(test))
-  }
-
-  def submitResult = Action(parse.json) { request =>
-    // Logic to save and evaluate results
-    Ok(Json.obj("message" -> "Test results submitted"))
-  }
-}
-```
-
-## 4. Module Dependency Diagram
-
-```mermaid
-graph TD
-    subgraph API Layer
-        API[API]
-    end
-
-    subgraph Domain Layer
-        UserManagement[User Management]
-        TypingTest[Typing Test]
-        Analytics[Analytics]
-    end
-
-    subgraph Persistence
-        MongoDB[(MongoDB)]
-        Statistics[(Statistics)]
-    end
-
-    API -- Uses --> UserManagement
-    API -- Uses --> TypingTest
-    API -- Uses --> Analytics
-
-    UserManagement -- "DB Access" --> MongoDB
-    TypingTest -- "DB Access" --> MongoDB
-    Analytics -- "DB Access" --> MongoDB
-
-    TypingTest -- "Generates" --> Statistics
-    Analytics -- "Analyzes" --> Statistics
-
-    classDef api fill:#e3f2fd,stroke:#2196f3,stroke-width:2px,color:#111;
-    classDef domain fill:#fffde7,stroke:#fbc02d,stroke-width:2px,color:#111;
-    classDef persistence fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#111;
-
-    class API api;
-    class UserManagement,TypingTest,Analytics domain;
-    class MongoDB,Statistics persistence;
-```
-
-## 5. Summary
-
-The Keyla-TTT project is modularly structured with a clear separation between user management, typing test logic, analytics, and API layers. The use of Scala, MongoDB, and functional programming techniques ensures a scalable and maintainable architecture, while the container-based approach simplifies deployment.

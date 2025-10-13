@@ -1,39 +1,20 @@
 # Introduction
 
-## Project Overview
+This document provides an overview of the development of an offline typing test application. The project is designed to offer users a simple yet effective tool for measuring and improving their typing speed and accuracy.
 
-**Keyla** is a comprehensive typing test application designed to improve keyboard typing skills, speed, and accuracy. Inspired by popular online platforms like Monkeytype and 10FastFingers, Keyla provides a local-first alternative that operates entirely offline, delivering the same engaging typing test experience.
+**1. Project Overview**
 
-The project consists of two main components:
-- **Keyla CLI**: A cross-platform command-line interface built with Kotlin Multiplatform for native desktop applications
-- **Keyla API**: A Scala-based backend service providing RESTful APIs and data persistence
+*   **Objectives:** The main objective is to create an intuitive and responsive platform where users can practice their typing skills. The application will provide key performance metrics, such as Words Per Minute (WPM) and accuracy percentage, allowing users to track their improvement over time.
+*   **Context:** This project is an offline application, intended for users who want to evaluate and enhance their keyboarding proficiency even without an internet connection.
+It can be used as a personal training tool, in an educational context, or for pre-employment skill assessment.
+*   **Target Audience:** The application is aimed at a wide range of users, including students, professionals, writers, developers, and anyone looking to become faster and more accurate at typing.
 
-## Objectives
+**2. Typing Test Functionality**
 
-The primary objectives of the Keyla project are:
+The application's core mechanism is designed for ease of use and effective feedback:
 
-1. **Local-First Approach**: Provide a typing test solution that works entirely offline
-2. **Cross-Platform Compatibility**: Support multiple operating systems (Windows, macOS, Linux) through a unified codebase
-3. **Comprehensive Typing Assessment**: Deliver detailed metrics including Words Per Minute (WPM), accuracy, error tracking, and performance analytics
-4. **User Experience**: Offer an intuitive command-line interface
-5. **Extensibility**: Support custom dictionaries, text modifiers, and configurable test parameters
-6. **Data Management**: Provide user profile management and historical test tracking
+1.  The user is presented with a paragraph of text to type.
+2.  As the user types, the interface provides immediate feedback, typically by highlighting correct and incorrect characters.
+3.  Once the test is completed, the application calculates and displays a summary of the user's performance, including their WPM score, accuracy rate, and the total time taken. This data helps users identify areas for improvement.
 
-## Context
 
-In today's digital age, typing proficiency has become an essential skill across various professional and personal contexts. While numerous online typing test platforms exist, they require constant internet connectivity to function properly.
-
-Keyla addresses this limitation by providing a local-first solution that:
-- Operates entirely offline without internet dependency
-- Runs natively on the user's device
-- Offers customizable test configurations
-- Supports multiple languages and dictionary sources
-- Provides detailed analytics and progress tracking
-
-## Target Users
-
-Keyla is designed for general users who want to improve their typing skills and prefer a local solution:
-
-- **General Typing Enthusiasts**: Users who enjoy typing tests and want to improve their speed and accuracy
-- **Offline Users**: People in environments with limited or no internet connectivity who still want to practice typing
-- **Local-First Users**: Individuals who prefer applications that work without internet dependency
