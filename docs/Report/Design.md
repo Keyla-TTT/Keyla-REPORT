@@ -19,19 +19,19 @@ The project is about the Digital Writing,
 this means the ability to write text using a computer keyboard with a certain speed and accuracy.
 
 
-## Contexts (Bounded Contexts)
-The Digital Writing domain has been divided into three main contexts to manage complexity and ensure clarity of responsibilities:
+## Bounded Contexts
+The Digital Writing domain has been divided into three main contexts 
+to manage complexity and ensure clarity of responsibilities:
 
-- **User Management**: User profile management (allow users to create and manage their profiles)
-- **Typing Test**: Typing test management (allow users to take typing tests and record their performance, here the user can choose the settings of the test)
-- **Statistics & Analytics**: Statistics and analytics management (allow users to view their performance statistics and the improvement/results over time)
+- **User Management**: allow users to create and manage their profiles
+- **Typing Test**: allow users to take typing tests and record their performance, 
+here the user can choose the configuration of the test
+- **Statistics & Analytics**: allow users to view their performance statistics and
+the improvement/results over time
 
-<!-- Description: Context Map showing User Management, Typing Test, and Statistics & Analytics and their relationships. -->
 ![Context Map](resources/DDD_ContextMap.png)
 
 ## Ubiquitous Language
-
-To facilitate communication between the team and stakeholders, a shared language has been defined:
 
 | Domain Term            | Technical Concept | Bounded Context                         | Description                                                              |
 |:-----------------------|:------------------|-----------------------------------------|:-------------------------------------------------------------------------|
@@ -55,120 +55,139 @@ To facilitate communication between the team and stakeholders, a shared language
 
 ### User Management
 
-- **Aggregate Root**: `PROFILE`
-  - Controls access to profile data (ID, Name) and profile configurations (Settings)
-- **Value Object**: `SETTINGS`
-  - List of features selectable by the user
-- **Repository**: `ProfileRepository`
-- **Factory**: `ProfileFactory`
-- **Domain Event**: Profile Created, Profile Updated, Profile Deleted
+**Purpose**: Manages user profiles and system configurations
 
-The User Management context centers around the PROFILE aggregate root, which controls access to user profile data and configurations. 
-Each profile has associated SETTINGS as a value object that encapsulates user preferences like theme, language, and default test parameters. 
-The ProfileRepository provides persistence capabilities, while the ProfileFactory handles the creation of new profiles. 
-Domain events (ProfileCreated, ProfileUpdated, and ProfileDeleted) allow the system to track and react to changes in user profiles, enabling loose coupling between components.
+**Core Components**:
+- **Aggregate Root**: `PROFILE`
+  - Manages user identity and profile data
+  - Controls access to user-specific settings and preferences
+- **Value Object**: `SETTINGS`
+  - Encapsulates user preferences (theme, language, default test parameters)
+  - Immutable configuration data
+
+**Infrastructure**:
+- **Repository**: `ProfileRepository` - Handles profile data persistence
+- **Factory**: `ProfileFactory` - Creates new profile instances
+- **Domain Events**: `ProfileCreated`, `ProfileUpdated`, `ProfileDeleted`
+
+**Responsibilities**:
+- User profile creation and management
+- System configuration management
+- User preference management
 
 ### Typing Test
 
-- **Aggregate Root**: `TEST SESSION`
-  - Controls Test Text, User Input, and state transitions
-- **Value Object**:
-  - `TEST TEXT`: text to be typed during the test
-  - `USER INPUT`: everything the user does during the test
-DDD  - `TEXT SOURCE`: dictionaries for text generation in different languages
-- **Repository**:
-  - `TextSourceRepo`: dictionaries for text generation
-  - `TypingTestRepo`: info about tests before execution
-  - `TestInfoRepo`: data about tests performed by the user (duration, words, errors, etc.)
-- **Factory**: `TestSessionFactory`
-- **Service Object**: `TestTextGenerator`
-- **Domain Event**: Test Start, Test Completed, Test Interrupt
+**Purpose**: Manages typing test execution and text generation
 
-The Typing Test context revolves around the TEST_SESSION aggregate root that manages the state and lifecycle of typing tests.
-It contains value objects like TEST_TEXT (the content to be typed), USER_INPUT (keystrokes recorded during the test), and references TEXT_SOURCE (dictionaries for text generation). 
-Multiple repositories handle different aspects of test data persistence: TextSourceRepo manages dictionaries, TypingTestRepo stores test session data, and TestInfoRepo maintains historical test information. 
-The TestTextGenerator service generates appropriate texts based on difficulty settings, while domain events (TestStart, TestCompleted, and TestInterrupt) mark important transitions in the test lifecycle.
+**Core Components**:
+- **Aggregate Root**: `TEST SESSION`
+  - Controls test lifecycle and state transitions
+  - Manages test text and user input coordination
+- **Value Objects**:
+  - `TEST TEXT`: Content to be typed during the test
+  - `USER INPUT`: User keystrokes
+  - `TEXT SOURCE`: Dictionaries for text generation in different languages
+
+**Infrastructure**:
+- **Repositories**:
+  - `TextSourceRepo` - Manages dictionaries and text sources
+  - `TypingTestRepo` - Stores test session metadata
+  - `TestInfoRepo` - Persists test execution data
+- **Factory**: `TestSessionFactory` - Creates new test sessions
+- **Service**: `TestTextGenerator` - Generates appropriate test content
+- **Domain Events**: `TestStart`, `TestCompleted`, `TestInterrupt`
+
+**Responsibilities**:
+- Test session lifecycle management
+- Text generation and selection
+- User input capture and validation
+- Test configuration management
 ### Statistics & Analytics
 
-- **Aggregate Root**: `STATISTICS`
-  - Controls Session Stats and Historical Stats
-- **Value Object**:
-  - `STATISTICS`: statistics of the single test session
-  - `ANALYTICS`: aggregated statistics
-  - `STAT`: interface for calculating WPM, Accuracy, RawAccuracy
-- **Repository**: `StatisticsRepo`
-- **Service Object**: Statistics Calculator, Analytics Calculator
+**Purpose**: Processes and analyzes typing performance data
 
-The Statistics & Analytics context is built around the STATISTICS aggregate root that manages both immediate test results and historical performance data. 
-It comprises value objects like SESSION_STATS (metrics from a single test) and HISTORICAL_STATS (aggregated performance over time). 
-The STAT interface defines the contract for various statistical calculations. 
-The StatisticsRepo provides persistence for both session and historical statistics, while service objects (StatisticsCalculator and AnalyticsCalculator) implement the algorithms for computing performance metrics and trend analysis.
+**Core Components**:
+- **Aggregate Root**: `STATISTICS`
+  - Manages both session-level and historical performance data
+  - Controls access to statistical calculations and analytics
+- **Value Objects**:
+  - `HISTORICAL_STATS`: Aggregated performance over time
+  - `STAT`: Core metrics (WPM, Accuracy, RawAccuracy)
+
+**Infrastructure**:
+- **Repository**: `StatisticsRepo` - Persists session and historical statistics
+- **Services**:
+  - `StatisticsCalculator` - Handle immediate test metrics
+  - `AnalyticsCalculator` - Generates trend analysis and insights
+
+**Responsibilities**:
+- Performance metric calculation
+- Historical data aggregation
+- Trend analysis and insights
+- Progress tracking over time
 ## Technical Architecture
 
 ![Architecture Diagram](resources/DDD_ArchitectureDiagram.png)
-![Schema](resources/DDD_scheme.png)
 
+Keyla follows a client-server architecture with a clear separation between the frontend (CLI) and 
+backend (API server). 
+This design allows for distributed deployment, scalability, 
+and the ability to support multiple client types in the future.
 
-Keyla's architecture is designed to be modular and maintainable, following the principles of Domain-Driven Design (DDD). It separates concerns into distinct layers, allowing for clear boundaries between domain logic, application services, user interfaces, and infrastructure components.
+### System Components
 
-| Layer              | Components                                                                                                                                                                                                             |
-|--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Domain**         | `SETTINGS`, `PROFILE`, `Profile Created`, `Profile Updated`, `Profile Deleted`, `TEST TEXT`, `USER INPUT`, `TEXT SOURCE`, `TEST SESSION`, `Test Start`, `Test Completed`, `Test Interrupt`, `STATISTICS`, `ANALYTICS`  |
-| **Application**    | `TestTextGenerator`, `Statistics Calculator`, `Analytics Calculator`                                                                                                                                                   |
-| **User Interface** | CLI, REST API                                                                                                                                                                                                          |
-| **Infrastructure** | Data Sources                                                                                                                                                                                                           |
+**Frontend (CLI Application)**
+- **Purpose**: Provides the user interface for interacting with typing tests
+- **Responsibilities**:
+  - User input capture
+  - Compute test metrics (WPM, Errors)
+  - Real-time test display and feedback
+  - Test session management (start, stop, restart)
+  - Results presentation and visualization
 
-The User Interface layer provides access through both CLI and REST API interfaces. These interfaces communicate with the Application layer, which contains service components like TestTextGenerator, Statistics Calculator, and Analytics Calculator that implement the core business logic. 
-The Domain layer is organized into three bounded contexts (User Management, Typing Test, and Statistics & Analytics), each containing its domain entities, value objects, and domain events. 
-The Infrastructure layer handles persistence through various repositories that store and retrieve domain objects from the data sources.
-The diagram clearly illustrates the dependencies between layers, showing how each layer depends only on the layers beneath it, which enforces a clean separation of concerns and makes the system more maintainable and extensible.
+**Backend (API Server)**
+- **Purpose**: Manages all business logic, data persistence, and core functionality
+- **Responsibilities**:
+  - User profile management and authentication
+  - Test text generation and dictionary management
+  - Statistics and analytics 
+  - Data persistence and historical tracking
 
 ## Information Flow
 
-The typical flow starts from the user interface (CLI or API), which sends requests to the application services. These orchestrate operations on the domain and interact with repositories for persistence.
+The system follows a client-server communication pattern 
+where the CLI frontend interacts with the backend through API calls. 
+This section illustrates the typical user journey and the underlying API interactions.
 
 ```mermaid
 sequenceDiagram
     actor User
-    participant UserController
-    participant UserRepository
-    participant TypingTestController
-    participant TypingTestService
+    participant CLI
+    participant BackendAPI
+    participant TestService
     participant TextRepository
-    participant StatisticsService
-    participant StatisticsRepository
-    participant AnalyticsService
 
-    User->>UserController: createProfile(profileData)
-    UserController->>UserRepository: save(profile)
-    UserRepository-->>UserController: profileId
-    UserController-->>User: profileCreated
-
-    User->>TypingTestController: startTest(difficulty, duration)
-    TypingTestController->>TypingTestService: generateTest(difficulty, duration)
-    TypingTestService->>TextRepository: getRandomText(difficulty)
-    TextRepository-->>TypingTestService: text
-    TypingTestService-->>TypingTestController: testSession
-    TypingTestController-->>User: displayTest(text)
-
-    User->>TypingTestController: submitInput(keystrokes, timestamps)
-    TypingTestController->>StatisticsService: calculateStats(testSession, userInput)
-    StatisticsService-->>TypingTestController: statistics(wpm, accuracy)
-    TypingTestController->>StatisticsRepository: saveStatistics(statistics)
-
-    User->>TypingTestController: viewProgress()
-    TypingTestController->>AnalyticsService: getUserProgress(profileId)
-    AnalyticsService->>StatisticsRepository: getHistoricalStats(profileId)
-    StatisticsRepository-->>AnalyticsService: historicalData
-    AnalyticsService-->>TypingTestController: progressAnalysis
-    TypingTestController-->>User: displayProgress(analysis)
+    User->>CLI: startTest(testConfig)
+    CLI->>BackendAPI: POST /api/tests/start
+    BackendAPI->>TestService: generateTest()
+    TestService->>TextRepository: getDictionaries()
+    TextRepository-->>TestService: dictionary
+    TestService-->>BackendAPI: testSession + testText
+    BackendAPI-->>CLI: 200 OK + testData
+    CLI-->>User: Display test text
 ```
 
-The process begins with user profile creation: the user interacts with the UserController, which in turn collaborates with the UserRepository to persistently store profile data. 
-Once this initial phase is completed, the flow continues with the start of a typing test, where the TypingTestController requests the TypingTestService to generate a new test based on the selected difficulty and duration parameters. 
-The service obtains an appropriate text from the TextRepository and prepares the test session that is presented to the user.
-During the test execution, the system records each keystroke of the user along with the corresponding timestamps. 
-At the end of the exercise, this data is sent to the StatisticsService which calculates fundamental metrics such as typing speed (WPM) and accuracy. 
-The results are saved to the database through the StatisticsRepository. 
-The flow concludes when the user requests to view their progress: the TypingTestController delegates to the AnalyticsService the retrieval of historical data from the StatisticsRepository to generate a comparative analysis that shows the average of performance over time.
+### Test Starting Flow
+
+The diagram above illustrates the process of starting a typing test:
+
+1. **User Request**: The user initiates a test by providing difficulty and duration parameters through the CLI
+2. **API Call**: The CLI sends a POST request to `/api/tests/start` with the test parameters
+3. **Test Generation**: The backend TestService generates a new test session
+4. **Text Selection**: The TestService retrieves appropriate text from the TextRepository
+5. **Response**: The backend returns the test session data and text content to the CLI
+6. **Display**: The CLI presents the test text to the user, ready for typing
+
+This simplified flow demonstrates the core interaction between the CLI frontend and backend API, 
+showing how user requests are processed and test content is delivered for the typing exercise.
 

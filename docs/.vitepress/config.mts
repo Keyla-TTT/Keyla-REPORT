@@ -21,8 +21,7 @@ export default withMermaid(defineConfig({
             { text: 'Implementation', link: '/Report/Implementation' },
             { text: 'Technologies', link: '/Report/Technologies' },
             { text: 'DevOps', link: '/Report/DevOps' },
-            { text: 'Conclusion', link: '/Report/Conclusion' },
-            { text: 'Trans', link: '/Report/Trans' }
+            { text: 'Conclusion', link: '/Report/Conclusion' }
           ]
         }
       ]
