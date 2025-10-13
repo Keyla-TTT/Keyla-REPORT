@@ -4,6 +4,7 @@ import { withMermaid } from "vitepress-plugin-mermaid";
 export default withMermaid(defineConfig({
   title: "Keyla-TTT",
   description: "Report for the Keyla Typing Test Tool",
+  base: '/Keyla-REPORT/',
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
@@ -17,6 +18,7 @@ export default withMermaid(defineConfig({
           text: 'Report Overview',
           items: [
             { text: 'Introduction', link: '/Report/Introduction' },
+            { text: 'Requirements', link: '/Report/Requirements' },
             { text: 'Design', link: '/Report/Design' },
             { text: 'Implementation', link: '/Report/Implementation' },
             { text: 'Technologies', link: '/Report/Technologies' },
