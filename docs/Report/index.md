@@ -12,7 +12,6 @@ This report documents the development of the KEYLA-TTT project, covering all asp
 - **[Requirements](./Requirements)** - Functional and non-functional requirements
 - **[Design](./Design)** - System architecture and design decisions
 - **[Implementation](./Implementation)** - Development process and code structure
-- **[Deployment](./Deployment)** - Deployment strategy and configuration
 - **[DevOps](./DevOps)** - CI/CD pipeline and infrastructure
 - **[Technologies](./Technologies)** - Technology stack and tools used
 - **[Conclusion](./Conclusion)** - Project summary and lessons learned
