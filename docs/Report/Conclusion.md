@@ -1,10 +1,9 @@
 # Conclusion
 
-In conclusione, il progetto keyla ha raggiunto con successo gli obiettivi prefissati, offrendo un'API robusta e scalabile. 
-L'architettura modulare e la separazione tra backend e frontend hanno permesso di creare un sistema efficiente e facilmente manutenibile.
-Tale architettura si presta inoltre a estensioni o modifiche future quali una GUI web-based (o locale), senza necessità di toccare il backend; l'aggiuta di feature senza impattare sull'architettura esistente; o l'integrazione con altri sistemi esterni.
-L'integrazione del semantic release, i commit convenzionali e l'uso di pre-commit hooks ha migliorato significativamente la qualità del codice, e soprattutto il caricamento di codice sempre pulito e corretto.
-Le pipeline CI/CD hanno contribuito ad avere un versionamento continuo e affidabile mantenendo aggiornata anche la documentazione.
+In conclusion, Keyla-TTT is the result of a structured and planned project using DDD methodology.
+Its development executed in CI/CD through GitHub Actions workflows for format control and code correctness has allowed to have always correct and clean code, as well as tested in every part (thanks to the test jobs).
+The same workflows have also been used for automating the release of new versions, which happens automatically through semantic-release, with the creation of specific artifacts and the publication of documentation on GitHub Pages.
+The meta repo has allowed to integrate the two projects (API and CLI) into a single one, enabling a unified release on dockerhub usable in any environment.
 
 ## Images of Keyla -TTT
 
