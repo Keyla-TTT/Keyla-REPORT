@@ -4,22 +4,14 @@ layout: home
 
 hero:
   name: "KEYLA-TTT"
-  text: "This Site is the report for thw KEYLA-TTT project, made for the SPE's exam."
-  tagline: My great project tagline
+  text: "A report for the Keyla Typing Test Tool project"
+  tagline: Offline typing test application
   actions:
     - theme: brand
-      text: Markdown Examples
-      link: /markdown-examples
+      text: View Full Report
+      link: /Report/Introduction
     - theme: alt
-      text: API Examples
-      link: /api-examples
-
-features:
-  - title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature C
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+      text: Design Overview
+      link: /Report/Design
 ---
 

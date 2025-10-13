@@ -27,7 +27,7 @@ The Digital Writing domain has been divided into three main contexts to manage c
 - **Statistics & Analytics**: Statistics and analytics management (allow users to view their performance statistics and the improvement/results over time)
 
 <!-- Description: Context Map showing User Management, Typing Test, and Statistics & Analytics and their relationships. -->
-![Context Map](Resources/DDD_ContextMap.png)
+![Context Map](resources/DDD_ContextMap.png)
 
 ## Ubiquitous Language
 
@@ -82,7 +82,7 @@ DDD  - `TEXT SOURCE`: dictionaries for text generation in different languages
   - `TestInfoRepo`: data about tests performed by the user (duration, words, errors, etc.)
 - **Factory**: `TestSessionFactory`
 - **Service Object**: `TestTextGenerator`
-- **Domain Event**: Test Start, Test Completed, Test Interrupt (Ctrl+C → returns to home without saving stats)
+- **Domain Event**: Test Start, Test Completed, Test Interrupt
 
 The Typing Test context revolves around the TEST_SESSION aggregate root that manages the state and lifecycle of typing tests.
 It contains value objects like TEST_TEXT (the content to be typed), USER_INPUT (keystrokes recorded during the test), and references TEXT_SOURCE (dictionaries for text generation). 
@@ -105,8 +105,10 @@ The STAT interface defines the contract for various statistical calculations.
 The StatisticsRepo provides persistence for both session and historical statistics, while service objects (StatisticsCalculator and AnalyticsCalculator) implement the algorithms for computing performance metrics and trend analysis.
 ## Technical Architecture
 
-![Architecture Diagram](Resources/DDD_ArchitectureDiagram.png)
-![Schema Qualcosa](Resources/DDD_scheme.png)
+![Architecture Diagram](resources/DDD_ArchitectureDiagram.png)
+![Schema](resources/DDD_scheme.png)
+
+
 Keyla's architecture is designed to be modular and maintainable, following the principles of Domain-Driven Design (DDD). It separates concerns into distinct layers, allowing for clear boundaries between domain logic, application services, user interfaces, and infrastructure components.
 
 | Layer              | Components                                                                                                                                                                                                             |

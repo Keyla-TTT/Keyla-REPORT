@@ -1,28 +1,40 @@
 import { defineConfig } from 'vitepress'
-
+import { withMermaid } from "vitepress-plugin-mermaid";
 // https://vitepress.dev/reference/site-config
-export default defineConfig({
-  title: "KEYLA-TTT",
-  description: "This Site is the report for thw KEYLA-TTT project, made for the SPE's exam.",
+export default withMermaid(defineConfig({
+  title: "Keyla-TTT",
+  description: "Report for the Keyla Typing Test Tool",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Examples', link: '/markdown-examples' }
+      { text: 'Report', link: '/Report/Introduction' }
     ],
 
-    sidebar: [
-      {
-        text: 'Examples',
-        items: [
-          { text: 'Markdown Examples', link: '/markdown-examples' },
-          { text: 'Runtime API Examples', link: '/api-examples' }
-        ]
-      }
-    ],
+    sidebar: {
+      '/Report/': [
+        {
+          text: 'Report Overview',
+          items: [
+            { text: 'Introduction', link: '/Report/Introduction' },
+            { text: 'Design', link: '/Report/Design' },
+            { text: 'Implementation', link: '/Report/Implementation' },
+            { text: 'Technologies', link: '/Report/Technologies' },
+            { text: 'DevOps', link: '/Report/DevOps' },
+            { text: 'Conclusion', link: '/Report/Conclusion' },
+            { text: 'Trans', link: '/Report/Trans' }
+          ]
+        }
+      ]
+    },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/vuejs/vitepress' }
-    ]
+      { icon: 'github', link: 'https://github.com/Keyla-TTT' }
+    ],
+
+    footer: {
+      message: 'Keyla-TTT Project Report for SPE Exam',
+      copyright: 'Copyright © 2025'
+    }
   }
-})
+}))
