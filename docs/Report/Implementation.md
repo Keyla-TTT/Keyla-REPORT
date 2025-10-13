@@ -10,7 +10,8 @@ The Backend part was subdivided into multiple modules (or packages) to facilitat
 - **Analytics**: Handles calculating and displaying test statistics.
 - **Api**: Handles API definition and endpoint management.
 
-<!-- Add a small descriptive part that introduces the API section -->
+All the modules interact with the CLI through the API module, which exposes all the functionalities via a RESTful interface where all the functionalities have its own endpoint. 
+So in some way, it's the core module of the software.
 
 ### API
 The `API` module defines the communication interface between frontend and backend, providing a structured set of endpoints to access system functionalities.
@@ -102,7 +103,7 @@ Transitions between states occur based on user choices, maintaining application 
 - **`keyla stats`**: Statistics display
 - **`keyla config`**: System configuration
 - **`keyla version`**: Shows application version
-- **`keyla help`**: Displays complete command guide
+- **`keyla help`**: Displays complete command guide (with all the subcommands and options)
 
 ### Interactive Mode vs Command Mode
 
