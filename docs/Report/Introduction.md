@@ -6,7 +6,7 @@ This document provides an overview of the development of an offline typing test 
 
 *   **Objectives:** The main objective is to create an intuitive and responsive platform where users can practice their typing skills. The application will provide key performance metrics, such as Words Per Minute (WPM) and accuracy percentage, allowing users to track their improvement over time.
 *   **Context:** This project is an offline application, intended for users who want to evaluate and enhance their keyboarding proficiency even without an internet connection.
-It can be used as a personal training tool, in an educational context, or for pre-employment skill assessment.
+It can be used as a personal training tool or in an educational context.
 *   **Target Audience:** The application is aimed at a wide range of users, including students, professionals, writers, developers, and anyone looking to become faster and more accurate at typing.
 
 **2. Typing Test Functionality**

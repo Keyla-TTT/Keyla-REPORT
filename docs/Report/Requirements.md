@@ -87,8 +87,8 @@ The system distinguishes between two types of performance data:
 - The system supports both local and remote db connections
 
 #### 2.1.2 Data Persistence
-- The system supports in-memory data persistence for local use
-- The system supports MongoDB for persistent data storage
+- The system supports in-memory data persistence for temporary use
+- The system supports persistent data storage
 - The system can be configured to use either persistence method
 
 ### 2.2 Usability

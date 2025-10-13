@@ -4,7 +4,9 @@ This chapter provides a comprehensive overview of the technologies used in the K
 
 ## Technology Stack Overview
 
-The Keyla project employs a modern, cross-platform technology stack designed to deliver a robust typing test application with offline capabilities. The architecture is divided into three main modules:
+The Keyla project employs a **cross-platform** technology stack 
+designed to deliver a robust typing test application with offline capabilities. 
+The architecture is divided into three main modules:
 
 - **Backend Module**: Scala-based REST API
 - **Frontend Module**: Kotlin Multiplatform CLI application
@@ -79,7 +81,8 @@ The Keyla project employs a modern, cross-platform technology stack designed to 
 - Multi-platform HTTP client
 - Platform-specific implementations (cURL, WinHttp, Darwin)
 
-**Role in Project**: Handles all HTTP communication between the CLI and the backend API, with platform-optimized implementations for each target OS.
+**Role in Project**: Handles all HTTP communication between the CLI and the backend API,
+with platform-optimized implementations for each target OS.
 
 ### MongoDB
 
@@ -89,9 +92,8 @@ The Keyla project employs a modern, cross-platform technology stack designed to 
 - Flexible document-based data model
 - Local deployment support
 
-**Role in Project**: Stores user profiles, typing test results, analytics data, and system configuration with support for both local and remote deployments.
-
-**Purpose**: Official MongoDB driver for Scala/Java applications.
+**Role in Project**: Stores user profiles, typing test results, analytics data, 
+and system configuration with support for both local and remote deployments.
 
 **Key Features**:
 - Synchronous and asynchronous operations

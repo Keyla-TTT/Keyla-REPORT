@@ -2,7 +2,7 @@
 
 ## Problem
 
-There are many people who want to improve their typing skills, 
+There are many people who want to improve their **typing skills**, 
 whether for professional or personal reasons. 
 Typing tests help users identify their strengths and weaknesses, 
 track their progress over time, and set goals for improvement.
@@ -10,12 +10,12 @@ The actual tools are only online services, but there are many users who want to 
 
 ## Solution
 
-Keyla: Typing Testing tools.
-A local CLI tool that allows users to take typing tests, track their progress, and analyze their performance over time.
+A **local tool** that allows users to take typing tests, track their progress, 
+and analyze their performance over time.
 
 ## Domain
 
-The project is about the Digital Writing, 
+The project is about the **Digital Writing**, 
 this means the ability to write text using a computer keyboard with a certain speed and accuracy.
 
 
@@ -24,8 +24,8 @@ The Digital Writing domain has been divided into three main contexts
 to manage complexity and ensure clarity of responsibilities:
 
 - **User Management**: allow users to create and manage their profiles
-- **Typing Test**: allow users to take typing tests and record their performance, 
-here the user can choose the configuration of the test
+- **Typing Test**: allow users to take typing tests and record their performance. 
+Here the user can choose the configuration of the test
 - **Statistics & Analytics**: allow users to view their performance statistics and
 the improvement/results over time
 
@@ -49,7 +49,7 @@ the improvement/results over time
 | Raw Accuracy           | `RawAccuracy`     | Typing test / Statistics and Analytics  | Percentage of correct characters out of the total characters in the test |
 | Errors                 | `Errors`          | Typing test / Statistics and Analytics  | When the user types the wrong character                                  |
 | Statistics             | `Stats`           | Statistics and Analytics                | Performance data of each test                                            |
-| Analytics              | `HistoricalStats` | Statistics and Analytics                | Statistics over time                                                     |
+| Analytics              | `Analytics`       | Statistics and Analytics                | Statistics over time                                                     |
 
 ## Domain Model
 
@@ -111,8 +111,8 @@ the improvement/results over time
   - Manages both session-level and historical performance data
   - Controls access to statistical calculations and analytics
 - **Value Objects**:
-  - `HISTORICAL_STATS`: Aggregated performance over time
-  - `STAT`: Core metrics (WPM, Accuracy, RawAccuracy)
+  - `ANALYTICS`: Aggregated performance over time
+  - `STATS`: Core metrics (WPM, Accuracy, RawAccuracy)
 
 **Infrastructure**:
 - **Repository**: `StatisticsRepo` - Persists session and historical statistics
@@ -136,19 +136,19 @@ and the ability to support multiple client types in the future.
 
 ### System Components
 
-**Frontend (CLI Application)**
+**Frontend**
 - **Purpose**: Provides the user interface for interacting with typing tests
 - **Responsibilities**:
   - User input capture
-  - Compute test metrics (WPM, Errors)
+  - Compute test metrics (WPM, Accuracy, Errors)
   - Real-time test display and feedback
   - Test session management (start, stop, restart)
   - Results presentation and visualization
 
-**Backend (API Server)**
+**Backend**
 - **Purpose**: Manages all business logic, data persistence, and core functionality
 - **Responsibilities**:
-  - User profile management and authentication
+  - User profile management
   - Test text generation and dictionary management
   - Statistics and analytics 
   - Data persistence and historical tracking

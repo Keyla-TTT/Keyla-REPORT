@@ -1,16 +1,17 @@
 
 # Implementation
 This chapter describes how the various functionalities of the project were implemented.
-Keyla was developed on 2 fronts: the backend that handles the logic and the CLI interface that
-guides the user in using the software and manages the system execution flow.
+Keyla was developed on 2 fronts: 
+- **Backend** that handles the logic and the 
+- **CLI interface** that guides the user in using the software and manages the system execution flow.
 
 ## Backend
 The Backend part was subdivided into multiple modules (or packages) to facilitate maintenance, 
 maintaining the concept of single responsibility.
-- **UserManagement**: Handles user management.
-- **TypingTest**: Handles creating and managing typing tests.
-- **Analytics**: Handles calculating and displaying test statistics.
-- **Api**: Handles API definition and endpoint management.
+- **User Management**
+- **TypingTest**
+- **Analytics**
+- **Api**
 
 All the modules interact with the CLI through the API module, which exposes all the functionalities 
 via a REST interface where all the functionalities have its own endpoint.
@@ -18,24 +19,8 @@ via a REST interface where all the functionalities have its own endpoint.
 ### API
 The `API` module defines the communication interface between frontend and backend, providing a structured set of endpoints to access system functionalities.
 
-The API architecture follows the REST pattern, organizing operations into logical resources corresponding to the main backend modules. Endpoints are grouped into the following categories:
-
-**User Management Endpoints:**
-- `GET /users/{id}`: retrieves information of a specific user profile
-- `POST /users`: creates a new user profile
-- `PUT /users/{id}`: updates an existing user profile
-- `DELETE /users/{id}`: deletes a user profile
-- `GET /users`: retrieves the list of all user profiles
-
-**Typing Test Endpoints:**
-- `POST /tests`: creates and starts a new typing test
-- `GET /tests/{id}`: retrieves details of a specific test
-- `GET /users/{userId}/tests`: retrieves all tests of a user
-- `GET /users/{userId}/tests/last`: retrieves the last completed test by a user
-
-**Analytics Endpoints:**
-- `GET /users/{userId}/analytics`: retrieves aggregated statistics of a user
-- `GET /users/{userId}/statistics`: retrieves individual test statistics
+The API architecture follows the REST pattern, organizing operations into 
+logical resources corresponding to the main backend modules.
 
 HTTP request and response handling is delegated to a routing layer that takes care of:
 - Routing requests to appropriate services
@@ -46,14 +31,14 @@ The API module implements the Controller pattern through a three-layer
 structure that ensures separation of concerns:
 
 1. **Controller Layer**: Each REST resource is managed by a dedicated controller 
-(`UserController`, `TypingTestController`, `AnalyticsController`) that exclusively handles:
+that exclusively handles:
     - Receiving incoming requests
     - Delegating processing to business layer services
     - Formatting HTTP responses with appropriate status codes
     - Handling presentation layer specific exceptions
 
 2. **Service Layer**: Controllers interface with services from respective backend modules 
-(`UserManagement`, `TypingTest`, `Analytics`) that contain business logic. 
+that contain business logic. 
 This separation allows to:
     - Reuse business logic in contexts other than REST API
     - Test business logic and presentation logic separately
@@ -79,12 +64,12 @@ keeping cross‑mode rules (e.g., profile presence, connectivity checks) in one 
 The UI renders from state, 
 and a single event loop handles key presses and runs small background tasks to load or save data.
 
-- **Service facade**: provides simple functions for tests, profiles, configuration, languages, analytics, and statistics. 
+- **Service facades**: provide simple functions for tests, profiles, configuration, languages, analytics, and statistics. 
 It hides HTTP calls and JSON parsing, returning plain Kotlin models used by the rest of the application.
 
 - **Configuration and persistence**: maintains app settings such as the backend base URL and the active profile.
 
-- **Platform abstractions** (`expect`/`actual`). Thin interfaces provide the HTTP client engine, local storage, and basic platform utilities for each target. The shared logic stays the same across all platforms.
+- **Platform abstractions**: Interfaces that provide the HTTP client engine, local storage, and basic platform utilities for each target. The shared logic stays the same across all platforms.
 
 ### Entry Points
 The launcher accepts a single command and starts the corresponding mode:
@@ -96,13 +81,14 @@ The launcher accepts a single command and starts the corresponding mode:
 - `profile`
 
 ### State Management
-Each mode is modeled as a stateful screen. 
-The UI is rendered from state; a single event loop listens for key presses, updates state, and re‑renders. 
-Small async handlers load or save data through the service facade and then update the state.
+Each mode is modeled as a **stateful** screen. 
+The UI is rendered from state: a single event loop listens for key presses, updates state,
+and re‑renders. 
+**Async handlers** load or save data through the service facade and then update the state.
 
 ### Platforms
 Shared logic lives in common code. 
-Thin platform modules provide the HTTP client and local storage. 
+The platform modules provide the HTTP client and local storage. 
 Native builds exist for JVM, Linux, Windows, and macOS.
 
 ### Commands

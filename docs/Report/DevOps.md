@@ -18,7 +18,7 @@ The project adopts a GitFlow-based workflow with the following branches:
 
 - **`develop`**: Integration branch for new features
 - **`main`**: Stable production branch
-- **`release`**: Trigger branch for an automated release process
+- **`hotfix/`**: Branches for bug fixing
 - **`feature/*`**: Branches for new feature development
 
 ### Commit Conventions
@@ -29,34 +29,36 @@ The project uses **Conventional Commits** to standardize commit messages, enabli
 
 The project implements separate pre-commit hooks for backend and frontend to ensure code quality before every commit.
 
-### Backend (API Scala) - Pre-commit Hook
+### Backend - Pre-commit Hook
 
 The Scala backend implements a pre-commit hook that ensures code quality before every commit. 
-The hook automatically identifies modified Scala files and runs formatting checks (`scalafmtCheck`) and static analysis 
-(`scalafixAll --check`). 
+The hook automatically identifies modified Scala files and runs formatting checks `scalafmtCheck` and static analysis 
+`scalafixAll --check`. 
 If any checks fail, it automatically applies corrections using `scalafmtAll` and `scalafixAll`, 
 then adds the corrected files to the commit.
 
-### Frontend (CLI Kotlin) - Pre-commit Hook
+### Frontend - Pre-commit Hook
 
-The Kotlin frontend implements a more complex pre-commit hook that includes tests. The hook runs code quality checks using 
+The Kotlin frontend also implements a pre-commit hook. 
+The hook runs code quality checks using 
 `ktlintCheck` and `detekt`, auto-formats code with `ktlintFormat` if issues are found, and then executes the complete test suite with `allTests`. 
 The commit is blocked if any check fails.
 
 ### Commit Message Validation
 
-Both backend and frontend use a `commit-msg` hook that validates commit a message format according to Conventional Commits standards. 
+Both backend and frontend use a `commit-msg` hook that validates commit a message format according 
+to _Conventional Commits_ standards. 
 The hook enforces the pattern `type(scope): description` where type must be one of: 
 feat, fix, docs, style, refactor, test, chore, perf, ci, build, or revert.
 
 ## 3. Continuous Integration Pipelines
 
-### API (Scala) - CI Pipeline
+### API - CI Pipeline
 
 The CI pipeline for the API is defined in `.github/workflows/scala.yml` and triggers on pull requests to develop and main branches. 
 The pipeline consists of four main jobs:
 
-1. **Setup**: Configures the environment and caches SBT dependencies for faster subsequent runs
+1. **Setup**: Configures the environment
 2. **Format**: Verifies code formatting using `scalafmtCheckAll`
 3. **Lint**: Performs static analysis using `scalafixAll --check`
 4. **Test**: Runs the test suite with code coverage reporting using Scoverage, then uploads coverage reports as artifacts
@@ -64,7 +66,7 @@ The pipeline consists of four main jobs:
 ![Scala CI](resources/scalaCI.png)
 
 
-### Frontend (CLI Kotlin) - CI Pipeline
+### Frontend - CI Pipeline
 
 The CI pipeline for the frontend is defined in `.github/workflows/kotlin.yml` and triggers on pull requests 
 to develop and main branches. 
@@ -82,7 +84,7 @@ The pipeline consists of three main jobs:
 
 The release process is triggered by pushes to the `main` branch of each repository. 
 
-### API (Scala) Release
+### API Release
 
 The Scala release workflow consists of three main jobs:
 
@@ -93,7 +95,7 @@ The Scala release workflow consists of three main jobs:
 
 ![Scala Release](resources/scalaRelease.png)
 
-### Frontend (CLI Kotlin) Release
+### Frontend Release
 
 The Kotlin release workflow consists of four main jobs:
 
@@ -139,10 +141,7 @@ The final Docker image (`keylattt/keyla`) combines:
 - **CLI Binaries**: Native executables already installed
 - **Dictionaries**: Dictionary files for typing tests
 
-The Docker image includes all necessary components for running the complete Keyla application. 
-It sets up the proper directory structure, 
-installs the CLI binary as a system command, extracts and configures the API, 
-and provides startup scripts to run both components together.
+The Docker image includes all necessary components for running the complete Keyla application.
 
 ## 6. Automation and Code Quality
 
