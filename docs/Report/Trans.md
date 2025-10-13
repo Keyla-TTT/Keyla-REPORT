@@ -65,15 +65,85 @@ I controller agiscono come intermediari tra il protocollo HTTP e la logica di bu
 
 ## CLI
 
-Si comporta come automa a stati finiti sfruttando gli endpoint:
- partende da una schermata (che può essere il menu), mostra come opzioni tutti i vari edpoint relativi a quella schermata....APPROFONDIRE E MIGLIORARE
+In questo capitolo viene descritto come è stata implementata l'interfaccia CLI di Keyla, che rappresenta il punto di accesso principale per gli utenti.
 
-Ci sono tutti i vari entry point:
-- 'keyla start'
-- 'keyla profile'
-- 'keyla test'
-- ...
-- FINIRE con tutti gli entry point
+### Gestione degli Stati
 
-La cli oltre a configurare i config (del backend) si occupa di gestire alcuni settings suoi, come profilo da utilizzare, url dell'api ecc..
+L'implementazione è basata sul concetto di automa a stati finiti, dove ogni schermata rappresenta uno stato specifico del sistema.
+Ogni stato/schermata presenta all'utente un set di opzioni correlate agli endpoint del backend disponibili per quel contesto:
 
+- **Menu Principale**: Stato iniziale che presenta le opzioni principali (profili, test, statistiche)
+- **Profile Management**: Gestisce la creazione, modifica e selezione dei profili utente
+- **Test Execution**: Coordina l'esecuzione dei test di digitazione
+- **Analytics View**: Visualizza le statistiche e i dati analitici
+- **Settings Configuration**: Permette la configurazione delle impostazioni CLI e backend
+
+### Mapping Stati-Endpoint
+
+Ogni stato della CLI è associato a specifici endpoint del backend:
+
+```kotlin
+// Esempio di mapping per il ProfileState
+ProfileState --> {
+    GET /users          // Lista profili
+    POST /users         // Crea profilo
+    PUT /users/{id}     // Modifica profilo
+    DELETE /users/{id}  // Elimina profilo
+}
+```
+
+La transizione tra gli stati avviene in base alle scelte dell'utente, mantenendo la coerenza del flusso applicativo e garantendo che ogni schermata presenti solo le opzioni associate a quel constesto.
+
+
+### Comandi Principali
+
+- **`keyla start`**: Avvia l'interfaccia interattiva partendo dal menu principale
+- **`keyla profile`**: Accesso diretto alla gestione dei profili utente
+- **`keyla test`**: Gestione dei test di digitazione
+- **`keyla stats`**: Visualizzazione delle statistiche
+- **`keyla config`**: Configurazione del sistema
+- **`keyla version`**: Mostra la versione dell'applicazione
+- **`keyla help`**: Visualizza la guida completa dei comandi
+
+### Modalità Interattiva vs Modalità Comando
+
+La CLI supporta sia l'esecuzione di comandi singoli che la modalità interattiva:
+- I comandi diretti permettono l'automazione e l'integrazione in script
+- La modalità interattiva invece permette la navigazione muovendosi tra le schermate usando le opzioni presentate a schermo.
+
+## Gestione delle Configurazioni
+
+La CLI mantiene due tipi distinti di configurazioni per garantire la flessibilità d'uso:
+
+### Configurazioni Backend
+Serve a gestire i parametri del backend:
+- Impostazioni per la generazione dei test (lunghezza, difficoltà, modificatori)
+- Parametri di calcolo delle statistiche
+- Configurazioni del DB
+
+### Configurazioni CLI Locali
+Mantiene impostazioni specifiche per l'interfaccia:
+- **Profilo Attivo**: ID del profilo utente selezionato
+- **URL API**: Endpoint del backend a cui connettersi (locale o remoto)
+- **Preferenze di Visualizzazione**: Formattazione dell'output, lingua
+- **Cache Locale**: Dati temporanei per migliorare le performance
+
+## Multipiattaforma con Kotlin Multiplatform
+
+L'implementazione sfrutta Kotlin Multiplatform per garantire la compatibilità cross-platform.
+L'idea è permettere l'esecuzione nativa su tutti i principali sistemi operativi, senza dover scrivere codice specifico per ogni piattaforma.
+
+### Vantaggi della Soluzione Multipiattaforma
+
+1. **Codice Condiviso**: La logica principale è implementata una sola volta e condivisa tra tutte le piattaforme
+2. **Performance Native**: Compilazione nativa per ogni target specifico (windows, Linux, macOS)
+3. **API Platform-Specific**: Accesso alle API native del sistema operativo 
+4. **Distribuzione Semplificata**: Binari specifici per ogni piattaforma senza dipendenze esterne
+
+### Supporto Sistemi Operativi
+Per Keyla sono state configurate le seguenti piattaforme:
+- **Windows**: che genera un file Binario `.exe` 
+- **Linux**: che genera un file Binario nativo compatibile con le principali distribuzioni
+- **macOS**: che genera un file Binario nativo per macOS
+
+La CLI così implementata permette a tutti di navigare con semplicità all'interno dell'applicazione e con qualsiasi sistema operativo.

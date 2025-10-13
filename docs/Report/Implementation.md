@@ -1,243 +1,148 @@
+
 # Implementation
+This chapter describes how the various functionalities of the project were implemented.
+Keyla was developed on 2 fronts: the backend that handles the logic and the CLI interface that guides the user in using the software and manages the system execution flow.
 
-This chapter describes the implementation of the Keyla-TTT project, focusing on the API architecture and CLI components. The project follows a modular approach with clear separation between backend services and client interfaces.
+## Backend
+The Backend part was subdivided into multiple modules (or packages) to facilitate maintenance, maintaining the concept of single responsibility.
+- **UserManagement**: Handles user management.
+- **TypingTest**: Handles creating and managing typing tests.
+- **Analytics**: Handles calculating and displaying test statistics.
+- **Api**: Handles API definition and endpoint management.
 
-## 1. API Backend
+<!-- Add a small descriptive part that introduces the API section -->
 
-### 1.1 Architecture Overview
+### API
+The `API` module defines the communication interface between frontend and backend, providing a structured set of endpoints to access system functionalities.
 
-The backend follows a layered architecture pattern that promotes separation of concerns and maintainability. The architecture is structured in three main layers:
+The API architecture follows the REST pattern, organizing operations into logical resources corresponding to the main backend modules. Endpoints are grouped into the following categories:
 
-- **API Layer**: Handles HTTP requests, response formatting, and routing
-- **Domain Layer**: Contains business logic and domain models
-- **Persistence Layer**: Manages data storage and retrieval operations
+**User Management Endpoints:**
+- `GET /users/{id}`: retrieves information of a specific user profile
+- `POST /users`: creates a new user profile
+- `PUT /users/{id}`: updates an existing user profile
+- `DELETE /users/{id}`: deletes a user profile
+- `GET /users`: retrieves the list of all user profiles
 
-This architectural pattern ensures that business logic remains independent from external concerns like HTTP protocols or database implementations, making the system more testable and maintainable.
+**Typing Test Endpoints:**
+- `POST /tests`: creates and starts a new typing test
+- `GET /tests/{id}`: retrieves details of a specific test
+- `GET /users/{userId}/tests`: retrieves all tests of a user
+- `GET /users/{userId}/tests/last`: retrieves the last completed test by a user
+- `DELETE /tests/{id}`: deletes a specific test
 
-```mermaid
-graph TD
-    subgraph "API Layer"
-        Router[Request Router]
-        Controllers[Controllers]
-        Middleware[Middleware]
-    end
-    
-    subgraph "Domain Layer"
-        UserService[User Service]
-        TestService[Test Service]
-        AnalyticsService[Analytics Service]
-        Models[Domain Models]
-    end
-    
-    subgraph "Persistence Layer"
-        Repositories[Repositories]
-        MongoDB[(MongoDB)]
-    end
-    
-    Router --> Controllers
-    Controllers --> Middleware
-    Controllers --> UserService
-    Controllers --> TestService
-    Controllers --> AnalyticsService
-    
-    UserService --> Models
-    TestService --> Models
-    AnalyticsService --> Models
-    
-    UserService --> Repositories
-    TestService --> Repositories
-    AnalyticsService --> Repositories
-    
-    Repositories --> MongoDB
-    
-    classDef api fill:#e3f2fd,stroke:#2196f3,stroke-width:2px;
-    classDef domain fill:#fffde7,stroke:#fbc02d,stroke-width:2px;
-    classDef persistence fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px;
-    
-    class Router,Controllers,Middleware api;
-    class UserService,TestService,AnalyticsService,Models domain;
-    class Repositories,MongoDB persistence;
+**Analytics Endpoints:**
+- `GET /users/{userId}/analytics`: retrieves aggregated statistics of a user
+- `GET /users/{userId}/analytics/period`: retrieves statistics for a specific period
+- `GET /users/{userId}/statistics`: retrieves individual test statistics
+
+HTTP request and response handling is delegated to a routing layer that takes care of:
+- Validating input parameters
+- Routing requests to appropriate services
+- Handling errors and exceptions
+- Serializing and deserializing JSON data
+
+**Controller Pattern Implementation:**
+
+The API module implements the Controller pattern through a three-layer structure that ensures separation of concerns:
+
+1. **Controller Layer**: Each REST resource is managed by a dedicated controller (`UserController`, `TypingTestController`, `AnalyticsController`) that exclusively handles:
+    - Receiving incoming HTTP requests
+    - Extracting and validating parameters from requests
+    - Delegating processing to business layer services
+    - Formatting HTTP responses with appropriate status codes
+    - Handling presentation layer specific exceptions
+
+2. **Service Layer**: Controllers interface with services from respective backend modules (`UserManagement`, `TypingTest`, `Analytics`) that contain business logic. This separation allows to:
+    - Keep controllers lean and focused on HTTP handling
+    - Reuse business logic in contexts other than REST API
+    - Test business logic and presentation logic separately
+
+3. **Repository Layer**: Services in turn use repositories for data access, completing the layered architecture.
+
+This implementation ensures that each controller has a specific and limited responsibility, making the code more maintainable and testable.
+Controllers act as intermediaries between the HTTP protocol and business logic, translating requests into calls to appropriate services and transforming results into structured HTTP responses.
+
+## Frontend / CLI
+
+This section describes how Keyla's CLI interface was implemented, which represents the main access point for users.
+
+### State Management
+
+The implementation is based on the concept of finite state automaton, where each screen represents a specific system state.
+Each state/screen presents users with a set of options related to available backend endpoints for that context:
+
+- **Main Menu**: Initial state that presents main options (profiles, tests, statistics)
+- **Profile Management**: Manages creation, modification and selection of user profiles
+- **Test Execution**: Coordinates typing test execution
+- **Analytics View**: Displays statistics and analytical data
+- **Settings Configuration**: Allows configuration of CLI and backend settings
+
+### State-Endpoint Mapping
+
+Each CLI state is associated with specific backend endpoints:
+
+```kotlin
+// Example mapping for ProfileState
+ProfileState --> {
+    GET /users          // List profiles
+    POST /users         // Create profile
+    PUT /users/{id}     // Modify profile
+    DELETE /users/{id}  // Delete profile
+}
 ```
 
-### 1.2 Backend Functionality
+Transitions between states occur based on user choices, maintaining application flow consistency and ensuring each screen presents only options associated with that context.
 
-The backend's functionalities include all the three main subdomains described in the design chapter:
+### Main Commands
 
-#### User Management
-In this subdomain (at the implementation level, it became a package), provides the following functionalities:
-- **User Registration**: To create new user accounts with validation of username and password 
-- **Authentication**: Implements secure login mechanism using JWT tokens for session management
-- **Profile Management**: Allows users to view and update their profile settings
+- **`keyla start`**: Starts the interactive interface from the main menu
+- **`keyla profile`**: Direct access to user profile management
+- **`keyla test`**: Typing test management
+- **`keyla stats`**: Statistics display
+- **`keyla config`**: System configuration
+- **`keyla version`**: Shows application version
+- **`keyla help`**: Displays complete command guide
 
-#### Typing Test Management
-- **Test Generation**: Creates typing tests with configurable difficulty levels and durations
-- **Text Repository**: Manages a collection of texts categorized by difficulty and theme
-- **Test Execution**: Tracks user input during typing sessions and calculates performance metrics
-- **Result Validation**: Ensures submitted test results are legitimate and within acceptable parameters
+### Interactive Mode vs Command Mode
 
-#### Analytics and Statistics
-- **Performance Tracking**: Records and stores detailed statistics for each completed test
-- **Progress Analysis**: Calculates user improvement trends over time
-- **Comparative Analytics**: Provides insights into user performance relative to difficulty levels
-- **Data Aggregation**: Generates summary statistics and performance reports
+The CLI supports both single command execution and interactive mode:
+- Direct commands allow automation and integration in scripts
+- Interactive mode allows navigation by moving between screens using on-screen options
 
-### 1.3 REST API Implementation
+### Configuration Management
 
-The REST API exposes the backend functionality through well-structured HTTP endpoints following RESTful conventions:
+The CLI maintains two distinct types of configurations to ensure usage flexibility:
 
-#### Authentication Endpoints
-- `POST /api/v1/auth/register` - User registration with email and password
-- `POST /api/v1/auth/login` - User authentication returning JWT token
-- `POST /api/v1/auth/logout` - Token invalidation and session termination
-- `GET /api/v1/auth/profile` - Retrieves authenticated user profile
+**Backend Configurations**
+Manages backend parameters:
+- Settings for test generation (length, difficulty, modifiers)
+- Statistics calculation parameters
+- Database configurations
 
-#### User Management Endpoints
-- `GET /api/v1/users/profile` - Fetch current user profile information
-- `PUT /api/v1/users/profile` - Update user profile data
-- `DELETE /api/v1/users/account` - Account deletion with data cleanup
+**Local CLI Configurations**
+Maintains interface-specific settings:
+- **Active Profile**: Selected user profile ID
+- **API URL**: Backend endpoint to connect to (local or remote)
+- **Display Preferences**: Output formatting, language
+- **Local Cache**: Temporary data to improve performance
 
-#### Typing Test Endpoints
-- `POST /api/v1/tests/generate` - Creates new typing test based on difficulty and duration parameters
-- `GET /api/v1/tests/{testId}` - Retrieves specific test details
-- `POST /api/v1/tests/{testId}/submit` - Submits completed test results for evaluation
-- `GET /api/v1/tests/history` - Lists user's completed tests with pagination
+### Multiplatform with Kotlin Multiplatform
 
-#### Analytics Endpoints
-- `GET /api/v1/analytics/user/{userId}` - Retrieves comprehensive user performance statistics
-- `GET /api/v1/analytics/progress/{userId}` - Calculates and returns user progress metrics
-- `GET /api/v1/analytics/summary` - Provides aggregated performance summary for the user
+The implementation leverages Kotlin Multiplatform to ensure cross-platform compatibility.
+The idea is to allow native execution on all major operating systems without writing platform-specific code.
 
-## 2. CLI Implementation
+### Multiplatform Solution Benefits
 
-### 2.1 Architecture Overview
+1. **Shared Code**: Main logic is implemented once and shared across all platforms
+2. **Native Performance**: Native compilation for each specific target (Windows, Linux, macOS)
+3. **Platform-Specific APIs**: Access to native operating system APIs
+4. **Simplified Distribution**: Platform-specific binaries without external dependencies
 
-The CLI component serves as a command-line client that interacts with the backend API. It follows a command-pattern architecture with clear separation between command parsing, execution, and API communication.
+### Operating System Support
+The following platforms have been configured for Keyla:
+- **Windows**: generates a `.exe` binary file
+- **Linux**: generates a native binary file compatible with major distributions
+- **macOS**: generates a native binary file for macOS
 
-The CLI architecture consists of:
-
-- **Command Layer**: Handles command parsing and user interaction
-- **Service Layer**: Manages API communication and data processing
-- **Configuration Layer**: Handles persistent settings and authentication tokens
-
-```mermaid
-graph TD
-    subgraph "CLI Application"
-        Entry[CLI Entry Point]
-        Parser[Command Parser]
-        Commands[Command Handlers]
-    end
-    
-    subgraph "Service Layer"
-        ApiClient[API Client]
-        ConfigManager[Config Manager]
-        AuthManager[Auth Manager]
-    end
-    
-    subgraph "External Dependencies"
-        BackendAPI[Backend API]
-        FileSystem[File System]
-        GitHooks[Git Hooks]
-    end
-    
-    Entry --> Parser
-    Parser --> Commands
-    Commands --> ApiClient
-    Commands --> ConfigManager
-    Commands --> AuthManager
-    
-    ApiClient --> BackendAPI
-    ConfigManager --> FileSystem
-    AuthManager --> ConfigManager
-    Commands --> GitHooks
-    
-    classDef cli fill:#e8f5e8,stroke:#4caf50,stroke-width:2px;
-    classDef service fill:#fff3e0,stroke:#ff9800,stroke-width:2px;
-    classDef external fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px;
-    
-    class Entry,Parser,Commands cli;
-    class ApiClient,ConfigManager,AuthManager service;
-    class BackendAPI,FileSystem,GitHooks external;
-```
-
-### 2.2 CLI Functionality
-
-The CLI provides comprehensive functionality that mirrors and extends the backend capabilities:
-
-#### Authentication Management
-- **Login Command**: Authenticates users and stores JWT tokens locally for subsequent requests
-- **Logout Command**: Invalidates stored tokens and clears authentication state
-- **Profile Display**: Shows current user information and authentication status
-
-#### Typing Test Interface
-- **Test Generation**: Creates typing tests with customizable difficulty and duration settings
-- **Interactive Testing**: Provides real-time typing interface with immediate feedback
-- **Result Submission**: Automatically submits completed test results to the backend
-- **Test History**: Displays user's previous test results with filtering options
-
-#### Analytics and Reporting
-- **Performance Overview**: Shows comprehensive statistics including WPM, accuracy, and progress trends
-- **Progress Tracking**: Visualizes improvement over time with textual charts and metrics
-- **Comparative Analysis**: Displays performance relative to difficulty levels and time periods
-
-#### Development Integration
-- **Git Hooks Installation**: Automatically installs pre-commit hooks for development workflow
-- **Configuration Management**: Handles API endpoints, authentication tokens, and user preferences
-- **Cross-Platform Support**: Ensures compatibility across different operating systems
-
-### 2.3 CLI Command Structure
-
-The CLI implements a hierarchical command structure with the following main commands:
-
-#### Core Commands
-- `keyla login` - Handles user authentication with interactive password input
-- `keyla test` - Manages typing test generation, execution, and submission
-- `keyla analytics` - Provides access to performance statistics and progress reports
-- `keyla config` - Manages CLI configuration including API endpoints and display preferences
-
-#### Development Commands
-- `keyla hooks install` - Sets up Git hooks for automated workflow integration
-- `keyla hooks uninstall` - Removes installed Git hooks
-- `keyla version` - Displays CLI version and backend compatibility information
-
-#### Utility Commands
-- `keyla help` - Comprehensive help system with command-specific documentation
-- `keyla status` - Shows current authentication status and API connectivity
-- `keyla logout` - Clears stored authentication tokens and configuration
-
-### 2.4 Integration Features
-
-The CLI includes several advanced integration features:
-
-#### API Communication
-- **Automatic Token Management**: Handles JWT token storage, renewal, and expiration
-- **Network Error Handling**: Implements retry mechanisms and graceful degradation for network issues
-- **Response Caching**: Optimizes performance by caching frequently accessed data locally
-
-#### Development Workflow
-- **Git Integration**: Seamlessly integrates with Git repositories for automated testing workflows
-- **Build System Support**: Compatible with various build systems and CI/CD pipelines
-- **Configuration Profiles**: Supports multiple environment configurations for development, testing, and production
-
-## 3. Technology Stack Summary
-
-### Backend Technologies
-- **Scala 3**: Main programming language with functional programming paradigms
-- **Play Framework**: Web framework for REST API implementation
-- **MongoDB**: NoSQL database for flexible data storage and high performance
-- **SBT**: Build tool for dependency management and project compilation
-
-### CLI Technologies
-- **Kotlin**: Modern JVM language for cross-platform CLI development
-- **Picocli**: Advanced command-line parsing with annotation-based configuration
-- **Ktor Client**: HTTP client library for robust API communication
-- **Gradle**: Build system with application plugin for distribution management
-
-## 4. Deployment and Distribution
-
-Both components are designed for easy deployment and distribution:
-
-- **Backend**: Containerized using Docker for consistent deployment across environments
-- **CLI**: Distributed as standalone executables with platform-specific installers
-- **Configuration**: Environment-based configuration management for flexible deployment scenarios.
-
-
+The CLI implemented this way allows everyone to navigate the application with simplicity and with any operating system.
